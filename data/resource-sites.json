@@ -1,17 +1,73 @@
 [
   {
-    "id": "liangzi",
-    "name": "量子资源",
-    "apiUrl": "https://cj.lziapi.com/api.php/provide/vod/from/lzm3u8/at/json/",
+    "id": "jinying",
+    "name": "金鹰资源",
+    "apiUrl": "https://jyzyapi.com/provide/vod/from/jinyingyun/at/json",
     "type": "maccms_v10",
-    "playFrom": "lzm3u8",
+    "playFrom": "jinyingyun",
+    "isEnabled": true,
+    "weight": 98,
+    "status": "online",
+    "responseTime": 220,
+    "totalItems": 260000,
+    "lastCheckedAt": 1729516000000,
+    "createdAt": 1729516000000
+  },
+  {
+    "id": "ruyi",
+    "name": "如意资源",
+    "apiUrl": "https://cj.rycjapi.com/api.php/provide/vod/from/ruyi/at/json/",
+    "type": "maccms_v10",
+    "playFrom": "ruyi",
+    "isEnabled": true,
+    "weight": 96,
+    "status": "online",
+    "responseTime": 240,
+    "totalItems": 190000,
+    "lastCheckedAt": 1729516000000,
+    "createdAt": 1729516000000
+  },
+  {
+    "id": "feifan",
+    "name": "非凡资源",
+    "apiUrl": "http://cj.ffzyapi.com/api.php/provide/vod/from/ffm3u8/at/json/",
+    "type": "maccms_v10",
+    "playFrom": "ffm3u8",
     "isEnabled": true,
     "weight": 95,
     "status": "online",
+    "responseTime": 250,
+    "totalItems": 320000,
+    "lastCheckedAt": 1729516000000,
+    "createdAt": 1729516000000
+  },
+  {
+    "id": "baofeng",
+    "name": "暴风资源",
+    "apiUrl": "https://bfzyapi.com/api.php/provide/vod/from/bfm3u8/at/json/",
+    "type": "maccms_v10",
+    "playFrom": "bfm3u8",
+    "isEnabled": true,
+    "weight": 92,
+    "status": "online",
     "responseTime": 260,
-    "totalItems": 210000,
-    "lastCheckedAt": 1729515000000,
-    "createdAt": 1729515000000
+    "totalItems": 240000,
+    "lastCheckedAt": 1729516000000,
+    "createdAt": 1729516000000
+  },
+  {
+    "id": "modu",
+    "name": "魔都资源",
+    "apiUrl": "https://caiji.moduapi.cc/api.php/provide/vod/from/modum3u8/at/json/",
+    "type": "maccms_v10",
+    "playFrom": "modum3u8",
+    "isEnabled": true,
+    "weight": 90,
+    "status": "online",
+    "responseTime": 270,
+    "totalItems": 180000,
+    "lastCheckedAt": 1729516000000,
+    "createdAt": 1729516000000
   },
   {
     "id": "hongniu",
@@ -20,12 +76,26 @@
     "type": "maccms_v10",
     "playFrom": "hnm3u8",
     "isEnabled": true,
-    "weight": 90,
+    "weight": 88,
     "status": "online",
     "responseTime": 280,
     "totalItems": 180000,
-    "lastCheckedAt": 1729515000000,
-    "createdAt": 1729515000000
+    "lastCheckedAt": 1729516000000,
+    "createdAt": 1729516000000
+  },
+  {
+    "id": "liangzi",
+    "name": "量子资源",
+    "apiUrl": "https://cj.lziapi.com/api.php/provide/vod/from/lzm3u8/at/json/",
+    "type": "maccms_v10",
+    "playFrom": "lzm3u8",
+    "isEnabled": true,
+    "weight": 85,
+    "status": "online",
+    "responseTime": 320,
+    "totalItems": 210000,
+    "lastCheckedAt": 1729516000000,
+    "createdAt": 1729516000000
   },
   {
     "id": "maotai",
@@ -38,7 +108,7 @@
     "status": "online",
     "responseTime": 380,
     "totalItems": 150777,
-    "lastCheckedAt": 1729515000000,
-    "createdAt": 1729515000000
+    "lastCheckedAt": 1729516000000,
+    "createdAt": 1729516000000
   }
 ]

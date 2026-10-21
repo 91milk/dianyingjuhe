@@ -9,16 +9,72 @@ const CACHE_FILE_PATH = path.join(process.cwd(), "data", "cms-cache.json");
 
 const DEFAULT_SITES: ResourceSite[] = [
   {
-    id: "liangzi",
-    name: "量子资源",
-    apiUrl: "https://cj.lziapi.com/api.php/provide/vod/from/lzm3u8/at/json/",
+    id: "jinying",
+    name: "金鹰资源",
+    apiUrl: "https://jyzyapi.com/provide/vod/from/jinyingyun/at/json",
     type: "maccms_v10",
-    playFrom: "lzm3u8",
+    playFrom: "jinyingyun",
+    isEnabled: true,
+    weight: 98,
+    status: "online",
+    responseTime: 220,
+    totalItems: 260000,
+    lastCheckedAt: Date.now(),
+    createdAt: Date.now(),
+  },
+  {
+    id: "ruyi",
+    name: "如意资源",
+    apiUrl: "https://cj.rycjapi.com/api.php/provide/vod/from/ruyi/at/json/",
+    type: "maccms_v10",
+    playFrom: "ruyi",
+    isEnabled: true,
+    weight: 96,
+    status: "online",
+    responseTime: 240,
+    totalItems: 190000,
+    lastCheckedAt: Date.now(),
+    createdAt: Date.now(),
+  },
+  {
+    id: "feifan",
+    name: "非凡资源",
+    apiUrl: "http://cj.ffzyapi.com/api.php/provide/vod/from/ffm3u8/at/json/",
+    type: "maccms_v10",
+    playFrom: "ffm3u8",
     isEnabled: true,
     weight: 95,
     status: "online",
+    responseTime: 250,
+    totalItems: 320000,
+    lastCheckedAt: Date.now(),
+    createdAt: Date.now(),
+  },
+  {
+    id: "baofeng",
+    name: "暴风资源",
+    apiUrl: "https://bfzyapi.com/api.php/provide/vod/from/bfm3u8/at/json/",
+    type: "maccms_v10",
+    playFrom: "bfm3u8",
+    isEnabled: true,
+    weight: 92,
+    status: "online",
     responseTime: 260,
-    totalItems: 210000,
+    totalItems: 240000,
+    lastCheckedAt: Date.now(),
+    createdAt: Date.now(),
+  },
+  {
+    id: "modu",
+    name: "魔都资源",
+    apiUrl: "https://caiji.moduapi.cc/api.php/provide/vod/from/modum3u8/at/json/",
+    type: "maccms_v10",
+    playFrom: "modum3u8",
+    isEnabled: true,
+    weight: 90,
+    status: "online",
+    responseTime: 270,
+    totalItems: 180000,
     lastCheckedAt: Date.now(),
     createdAt: Date.now(),
   },
@@ -29,10 +85,24 @@ const DEFAULT_SITES: ResourceSite[] = [
     type: "maccms_v10",
     playFrom: "hnm3u8",
     isEnabled: true,
-    weight: 90,
+    weight: 88,
     status: "online",
     responseTime: 280,
     totalItems: 180000,
+    lastCheckedAt: Date.now(),
+    createdAt: Date.now(),
+  },
+  {
+    id: "liangzi",
+    name: "量子资源",
+    apiUrl: "https://cj.lziapi.com/api.php/provide/vod/from/lzm3u8/at/json/",
+    type: "maccms_v10",
+    playFrom: "lzm3u8",
+    isEnabled: true,
+    weight: 85,
+    status: "online",
+    responseTime: 320,
+    totalItems: 210000,
     lastCheckedAt: Date.now(),
     createdAt: Date.now(),
   },
@@ -262,7 +332,7 @@ export class ResourceSiteService {
     // 1. 尝试直接向支持关键词的远端接口发起搜索
     const fetchPromises = enabledSites.map(async (site) => {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 9000);
+      const timer = setTimeout(() => controller.abort(), 5000);
       try {
         const sep = site.apiUrl.includes("?") ? "&" : "?";
         const url = `${site.apiUrl}${sep}ac=videolist&wd=${encodeURIComponent(q)}`;
@@ -284,8 +354,13 @@ export class ResourceSiteService {
       }
     });
 
-    const resultsArray = await Promise.all(fetchPromises);
-    const remoteCombined = resultsArray.flat();
+    const settledResults = await Promise.allSettled(fetchPromises);
+    const remoteCombined: MovieItem[] = [];
+    settledResults.forEach((res) => {
+      if (res.status === "fulfilled" && Array.isArray(res.value)) {
+        remoteCombined.push(...res.value);
+      }
+    });
 
     // 2. 同时在本地同步采集缓存库中检索（完美应对禁止 wd= 的资源站）
     const cachedItems = this.getCachedItems().filter(
