@@ -52,6 +52,7 @@ export const WatchClient: React.FC<WatchClientProps> = ({
   // 核心：异步并发获取各个资源的播放地址，优先获取优先展示！
   useEffect(() => {
     let isMounted = true;
+    const abortCtrl = new AbortController();
 
     async function resolveLiveSources() {
       setIsResolving(true);
@@ -62,7 +63,9 @@ export const WatchClient: React.FC<WatchClientProps> = ({
         if (movie.id) query.set("id", movie.id);
         if (movie.title) query.set("title", movie.title);
 
-        const res = await fetch(`/api/movies/resolve?${query.toString()}`);
+        const res = await fetch(`/api/movies/resolve?${query.toString()}`, {
+          signal: abortCtrl.signal,
+        });
         const data = await res.json();
 
         if (isMounted && data.success && Array.isArray(data.sources) && data.sources.length > 0) {
@@ -86,7 +89,8 @@ export const WatchClient: React.FC<WatchClientProps> = ({
         } else if (isMounted) {
           setResolveMessage("全网探测完毕，当前已就绪");
         }
-      } catch (err) {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === "AbortError") return;
         if (isMounted) {
           setResolveMessage("部分资源站响应超时，已加载备用源");
         }
@@ -101,6 +105,7 @@ export const WatchClient: React.FC<WatchClientProps> = ({
 
     return () => {
       isMounted = false;
+      abortCtrl.abort();
     };
   }, [movie.id, movie.title]);
 

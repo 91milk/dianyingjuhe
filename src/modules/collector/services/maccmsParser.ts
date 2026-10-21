@@ -38,7 +38,8 @@ export class MacCmsParser {
    */
   static parsePlaySources(
     item: MacCmsItem,
-    siteName: string = "采集源"
+    siteName: string = "采集源",
+    siteId: string = "cms"
   ): PlaySource[] {
     const fromStr = item.vod_play_from || "默认线路";
     const urlStr = item.vod_play_url || "";
@@ -69,7 +70,7 @@ export class MacCmsParser {
 
       if (episodes.length > 0) {
         sources.push({
-          id: `src-${fromName}-${idx}`,
+          id: `src-${siteId}-${item.vod_id}-${fromName}-${idx}`,
           name: `${siteName} · ${fromName.toUpperCase()}`,
           episodes,
         });
@@ -84,7 +85,7 @@ export class MacCmsParser {
    */
   static toMovieItem(item: MacCmsItem, site: ResourceSite): MovieItem {
     const category = this.parseCategory(item.type_name);
-    const sources = this.parsePlaySources(item, site.name);
+    const sources = this.parsePlaySources(item, site.name, site.id);
 
     const rawRating = parseFloat(item.vod_score || "0");
     const rating = rawRating > 0 ? rawRating : 8.5; // 无评分时给予高基准推荐评分

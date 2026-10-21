@@ -23,11 +23,11 @@ export const SourceSelector: React.FC<SourceSelectorProps> = ({
         <Radio className="w-3.5 h-3.5 text-[#ffcf32]" />
         线路切换:
       </span>
-      {sources.map((src) => {
+      {sources.map((src, idx) => {
         const isActive = src.id === activeSourceId;
         return (
           <button
-            key={src.id}
+            key={`${src.id}-${idx}`}
             onClick={() => onSelectSource(src.id)}
             className={`px-3 py-1.5 text-xs rounded-lg transition-all font-medium shrink-0 cursor-pointer ${
               isActive
