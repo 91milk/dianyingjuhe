@@ -1,9 +1,10 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { movieService } from "@/modules/movie/services/movieService";
 import { MovieGrid } from "@/modules/movie/components/MovieGrid";
 import { Play, Sparkles, Flame, ChevronRight, Tv } from "lucide-react";
 
-export default async function HomePage() {
+async function HomeContent() {
   const featured = await movieService.getFeaturedMovies();
   const heroMovie = featured[0] || (await movieService.getMovieById("m-101"));
 
@@ -152,5 +153,13 @@ export default async function HomePage() {
         }
       />
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div className="text-zinc-500 py-16 text-center text-xs">加载影视资源中...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "maotai",
+    "name": "茅台资源站",
+    "apiUrl": "https://caiji.maotai999.vip/api.php/provide/vod/from/mtm3u8/at/josn/",
+    "type": "maccms_v10",
+    "playFrom": "mtm3u8",
+    "isEnabled": true,
+    "weight": 100,
+    "status": "online",
+    "responseTime": 380,
+    "totalItems": 150762,
+    "lastCheckedAt": 1729515000000,
+    "createdAt": 1729515000000
+  }
+]

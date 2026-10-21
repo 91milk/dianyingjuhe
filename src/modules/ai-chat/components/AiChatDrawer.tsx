@@ -2,9 +2,16 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { ChatMessage } from "../types";
-import { aiMovieService } from "../services/aiService";
 import { AiMovieCard } from "./AiMovieCard";
 import { Sparkles, Send, X, Bot, User, Trash2 } from "lucide-react";
+
+const PRESET_PROMPTS = [
+  { label: "烧脑反转悬疑", prompt: "推荐几部结局超级大反转、高智商博弈的烧脑悬疑电影" },
+  { label: "情绪治愈放松", prompt: "今天心情有点累，推荐温馨治愈、看完心里暖洋洋的片子" },
+  { label: "硬核太空科幻", prompt: "喜欢星际穿越、探索未知宇宙和黑洞的硬科幻大片" },
+  { label: "爆款爽剧短剧", prompt: "有没有节奏飞起、打脸逆袭的高能热门微短剧？" },
+  { label: "王家卫光影美学", prompt: "想看有电影级调色构图和深刻时代情绪的精品剧集" },
+];
 
 interface AiChatDrawerProps {
   isOpen: boolean;
@@ -24,7 +31,7 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const presets = aiMovieService.getPresetPrompts();
+  const presets = PRESET_PROMPTS;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,8 +59,17 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
     setIsLoading(true);
 
     try {
-      const response = await aiMovieService.generateResponse(text, messages);
-      setMessages((prev) => [...prev, response]);
+      const res = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, history: messages }),
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setMessages((prev) => [...prev, data.data]);
+      } else {
+        throw new Error("Chat error");
+      }
     } catch {
       setMessages((prev) => [
         ...prev,

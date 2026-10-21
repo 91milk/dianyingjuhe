@@ -1,4 +1,4 @@
-import { movieService } from "@/modules/movie/services/movieService";
+import { mockMovies } from "@/modules/movie/services/mockData";
 import { VisionSearchResult } from "../types";
 
 export class VisionService {
@@ -11,7 +11,7 @@ export class VisionService {
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     // 默认高拟真召回示例影片
-    const movie = await movieService.getMovieById("m-101");
+    const movie = mockMovies.find((m) => m.id === "m-101");
     if (!movie) return [];
 
     return [
@@ -21,7 +21,7 @@ export class VisionService {
         matchedSceneDescription: "检测到特征名场面：库珀穿越虫洞与米勒星球巨大海啸巨浪场景。",
       },
       {
-        movie: (await movieService.getMovieById("m-102")) || movie,
+        movie: mockMovies.find((m) => m.id === "m-102") || movie,
         similarity: 82,
         matchedSceneDescription: "次要匹配项：相似科幻与现实交织视觉风格。",
       },

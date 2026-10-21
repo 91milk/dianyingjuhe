@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { MovieItem, FilterOptions, MovieCategory } from "@/modules/movie/types";
 import { CategoryFilter } from "@/modules/movie/components/CategoryFilter";
 import { MovieGrid } from "@/modules/movie/components/MovieGrid";
-import { movieService } from "@/modules/movie/services/movieService";
 
 interface CategoryClientProps {
   initialMovies: MovieItem[];
@@ -31,12 +30,25 @@ export const CategoryClient: React.FC<CategoryClientProps> = ({
     let active = true;
 
     async function applyFilters() {
-      if (query.trim()) {
-        const results = await movieService.searchMovies(query);
-        if (active) setMovies(results);
-      } else {
-        const results = await movieService.filterMovies(filter);
-        if (active) setMovies(results);
+      try {
+        const params = new URLSearchParams();
+        if (query.trim()) {
+          params.set("q", query.trim());
+        } else {
+          if (filter.category) params.set("category", filter.category);
+          if (filter.genre) params.set("genre", filter.genre);
+          if (filter.region) params.set("region", filter.region);
+          if (filter.year) params.set("year", filter.year);
+          if (filter.sort) params.set("sort", filter.sort);
+        }
+
+        const res = await fetch(`/api/movies?${params.toString()}`);
+        const data = await res.json();
+        if (active && data.success && Array.isArray(data.data)) {
+          setMovies(data.data);
+        }
+      } catch (err) {
+        console.error("Filter fetch error:", err);
       }
     }
 

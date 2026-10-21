@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { siteConfig } from "@/config/site";
-import { Sparkles, Camera, Clock, Film, Search } from "lucide-react";
+import { Sparkles, Camera, Clock, Film, Search, Server } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface NavbarProps {
@@ -97,7 +97,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="hidden lg:inline">历史</span>
             </button>
           )}
-
+          {/* 资源站管理后台 */}
+          <Link
+            href="/admin/resources"
+            className="p-2 text-zinc-300 hover:text-[#ffcf32] hover:bg-zinc-800/80 rounded-xl transition flex items-center gap-1.5 text-xs font-medium cursor-pointer"
+            title="采集资源站管理"
+          >
+            <Server className="w-4 h-4" />
+            <span className="hidden lg:inline">资源库</span>
+          </Link>
           {/* AI 找片 (醒目高光按钮) */}
           {siteConfig.modules.enableAiChat && (
             <button
