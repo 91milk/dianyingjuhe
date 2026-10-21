@@ -17,7 +17,7 @@ async function HomeContent() {
     <div className="space-y-10">
       {/* 焦点 Hero Banner (仿懂片帝沉浸式头部推荐) */}
       {heroMovie && (
-        <div className="relative rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-950 aspect-21/9 min-h-[360px] flex items-end p-6 md:p-10 shadow-2xl">
+        <div className="relative rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-950 aspect-[21/9] min-h-[380px] flex items-end p-6 md:p-10 shadow-2xl">
           {/* 背景大图 */}
           <div
             className="absolute inset-0 bg-cover bg-center opacity-40 scale-105"
@@ -114,13 +114,7 @@ async function HomeContent() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {shortPlays.map((item) => (
-            <div key={item.id} className="relative">
-              <MovieGrid movies={[item]} />
-            </div>
-          ))}
-        </div>
+        <MovieGrid movies={shortPlays} className="my-0" />
       </div>
 
       {/* 热播电视剧 */}

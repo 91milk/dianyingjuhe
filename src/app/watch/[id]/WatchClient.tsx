@@ -67,26 +67,22 @@ export const WatchClient: React.FC<WatchClientProps> = ({
 
         if (isMounted && data.success && Array.isArray(data.sources) && data.sources.length > 0) {
           const newSources: PlaySource[] = data.sources;
+          // 优先使用真实采集站线路
+          const realSources = newSources.filter((s) => s.id !== "src-fallback");
+          const finalSources = realSources.length > 0 ? realSources : newSources;
 
-          setSources((prev) => {
-            // 合并现有与新发现的线路
-            const map = new Map<string, PlaySource>();
-            prev.forEach((s) => map.set(s.id, s));
-            newSources.forEach((s) => map.set(s.id, s));
-            return Array.from(map.values());
-          });
+          setSources(finalSources);
 
-          // 如果当前尚未开始播放任何有效源，立即优先展示并播放最快返回的第 1 条线路！
-          setActiveSource((current) => {
-            if (!current || !current.episodes || current.episodes.length === 0) {
-              const firstReady = newSources[0];
-              setActiveEpisode(firstReady.episodes[0] || null);
-              return firstReady;
-            }
-            return current;
-          });
+          // 立即优先激活最快返回的第 1 条有效线路并开播！
+          const primarySource = finalSources.find((s) => s.id === initialSourceId) || finalSources[0];
+          setActiveSource(primarySource);
 
-          setResolveMessage(`已成功获取 ${newSources.length} 条全网高清线路，已优先匹配最快源播放`);
+          if (primarySource && primarySource.episodes && primarySource.episodes.length > 0) {
+            const ep = primarySource.episodes.find((e) => e.id === initialEpisodeId) || primarySource.episodes[0];
+            setActiveEpisode(ep);
+          }
+
+          setResolveMessage(`已成功接入 ${finalSources.length} 条全网高清线路，当前播放：${primarySource.name}`);
         } else if (isMounted) {
           setResolveMessage("全网探测完毕，当前已就绪");
         }

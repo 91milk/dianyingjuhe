@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { resourceSiteService } from "@/modules/collector/services/resourceSiteService";
 import { PlaySource } from "@/modules/movie/types";
 
+// 规范化字符串用于模糊匹配（去空格、标点）
+function normalizeTitle(s: string): string {
+  return s.toLowerCase().replace(/[\s\-_:：·]/g, "");
+}
+
 // GET /api/movies/resolve?title=xxx&id=xxx
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -14,7 +19,7 @@ export async function GET(request: NextRequest) {
 
   const resolvedSources: PlaySource[] = [];
 
-  // 1. 如果是已知直连采集站ID格式
+  // 1. 如果是已知直连采集站ID格式 (cms_siteId_vodId)
   if (id && id.startsWith("cms_")) {
     const parts = id.split("_");
     if (parts.length >= 3) {
@@ -32,26 +37,34 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 2. 多源并发异步检索该片名的播放线路
+  // 2. 跨全网已启用资源站发起并发检索
   const searchKey = title || "";
   try {
-    const results = await resourceSiteService.searchAcrossSites(searchKey, 10);
-    // 精准或高度匹配片名
-    const matched = results.find(
-      (m) =>
-        m.title.toLowerCase() === searchKey.toLowerCase() ||
-        m.title.includes(searchKey) ||
-        searchKey.includes(m.title)
-    ) || results[0];
+    const results = await resourceSiteService.searchAcrossSites(searchKey, 15);
+    const normKey = normalizeTitle(searchKey);
 
-    if (matched && matched.sources.length > 0) {
-      resolvedSources.push(...matched.sources);
+    // 筛选出所有匹配该片名的结果，并合并其播放线路
+    for (const item of results) {
+      const normItem = normalizeTitle(item.title);
+      const isMatch =
+        normItem === normKey ||
+        normItem.includes(normKey) ||
+        normKey.includes(normItem);
+
+      if (isMatch && item.sources.length > 0) {
+        resolvedSources.push(...item.sources);
+      }
+    }
+
+    // 如果归一化没有完全命中，尝试采用最相关的第一条搜索结果
+    if (resolvedSources.length === 0 && results.length > 0 && results[0].sources.length > 0) {
+      resolvedSources.push(...results[0].sources);
     }
   } catch (err) {
     console.error("Resolve sources error:", err);
   }
 
-  // 3. 如果采集站暂时未命中（例如新上映或关键词受限），提供备用极速试看测试线路确保不黑屏
+  // 3. 只有当全网完全搜不到时才注入兜底备用线，避免正常影视被兜底覆盖
   if (resolvedSources.length === 0) {
     resolvedSources.push({
       id: "src-fallback",

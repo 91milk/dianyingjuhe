@@ -16,7 +16,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
       className="group relative flex flex-col rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer"
     >
       {/* 海报封面 */}
-      <div className="relative aspect-2/3 w-full overflow-hidden bg-zinc-800">
+      <div className="relative aspect-[2/3] w-full overflow-hidden bg-zinc-800">
         <img
           src={movie.poster}
           alt={movie.title}

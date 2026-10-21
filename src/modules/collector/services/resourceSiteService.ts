@@ -9,16 +9,44 @@ const CACHE_FILE_PATH = path.join(process.cwd(), "data", "cms-cache.json");
 
 const DEFAULT_SITES: ResourceSite[] = [
   {
+    id: "liangzi",
+    name: "量子资源",
+    apiUrl: "https://cj.lziapi.com/api.php/provide/vod/from/lzm3u8/at/json/",
+    type: "maccms_v10",
+    playFrom: "lzm3u8",
+    isEnabled: true,
+    weight: 95,
+    status: "online",
+    responseTime: 260,
+    totalItems: 210000,
+    lastCheckedAt: Date.now(),
+    createdAt: Date.now(),
+  },
+  {
+    id: "hongniu",
+    name: "红牛资源",
+    apiUrl: "https://www.hongniuzy2.com/api.php/provide/vod/from/hnm3u8/at/json/",
+    type: "maccms_v10",
+    playFrom: "hnm3u8",
+    isEnabled: true,
+    weight: 90,
+    status: "online",
+    responseTime: 280,
+    totalItems: 180000,
+    lastCheckedAt: Date.now(),
+    createdAt: Date.now(),
+  },
+  {
     id: "maotai",
-    name: "茅台资源站",
+    name: "茅台资源",
     apiUrl: "https://caiji.maotai999.vip/api.php/provide/vod/from/mtm3u8/at/josn/",
     type: "maccms_v10",
     playFrom: "mtm3u8",
     isEnabled: true,
-    weight: 100,
+    weight: 80,
     status: "online",
     responseTime: 380,
-    totalItems: 150762,
+    totalItems: 150777,
     lastCheckedAt: Date.now(),
     createdAt: Date.now(),
   },
@@ -234,7 +262,7 @@ export class ResourceSiteService {
     // 1. 尝试直接向支持关键词的远端接口发起搜索
     const fetchPromises = enabledSites.map(async (site) => {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 4000);
+      const timer = setTimeout(() => controller.abort(), 9000);
       try {
         const sep = site.apiUrl.includes("?") ? "&" : "?";
         const url = `${site.apiUrl}${sep}ac=videolist&wd=${encodeURIComponent(q)}`;

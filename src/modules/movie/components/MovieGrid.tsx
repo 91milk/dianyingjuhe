@@ -1,17 +1,25 @@
 import React from "react";
 import { MovieItem } from "../types";
 import { MovieCard } from "./MovieCard";
+import { cn } from "@/lib/utils";
 
 interface MovieGridProps {
   movies: MovieItem[];
   title?: string;
   subtitle?: string;
   action?: React.ReactNode;
+  className?: string;
 }
 
-export const MovieGrid: React.FC<MovieGridProps> = ({ movies, title, subtitle, action }) => {
+export const MovieGrid: React.FC<MovieGridProps> = ({
+  movies,
+  title,
+  subtitle,
+  action,
+  className,
+}) => {
   return (
-    <section className="my-8">
+    <section className={cn("my-6", className)}>
       {(title || action) && (
         <div className="flex items-end justify-between mb-4">
           <div>
