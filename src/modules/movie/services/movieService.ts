@@ -1,12 +1,14 @@
 import { MovieItem, FilterOptions, MovieCategory } from "../types";
+import { trendingMovies } from "./trendingService";
 import { mockMovies } from "./mockData";
 import { resourceSiteService } from "@/modules/collector/services/resourceSiteService";
 
 export class MovieService {
-  private localMovies: MovieItem[] = mockMovies;
+  // 合并公开热门榜单与精选片单，作为首页与发现库的秒开数据基座
+  private localMovies: MovieItem[] = [...trendingMovies, ...mockMovies];
 
   /**
-   * 获取精选轮播/焦点影片
+   * 获取精选轮播/焦点影片 (首页秒开)
    */
   async getFeaturedMovies(): Promise<MovieItem[]> {
     return this.localMovies.filter((m) => m.isFeatured);
@@ -20,28 +22,19 @@ export class MovieService {
   }
 
   /**
-   * 按分类获取影片列表（结合本地精选与资源站最新采集流）
+   * 按分类获取热门公开榜单影片 (首屏 0 延迟秒开，不阻塞在第三方采集源上)
    */
   async getByCategory(category: MovieCategory, limit = 12): Promise<MovieItem[]> {
-    const local = this.localMovies.filter((m) => m.category === category);
-    try {
-      const cmsItems = await resourceSiteService.getLatestFromSites(category, 1, limit);
-      // 合并去重
-      const map = new Map<string, MovieItem>();
-      local.forEach((m) => map.set(m.title, m));
-      cmsItems.forEach((m) => {
-        if (!map.has(m.title)) map.set(m.title, m);
-      });
-      return Array.from(map.values()).slice(0, limit);
-    } catch {
-      return local.slice(0, limit);
-    }
+    // 优先从热门公开榜单中返回
+    const items = this.localMovies.filter((m) => m.category === category);
+    return items.slice(0, limit);
   }
 
   /**
-   * 根据 ID 查询影片详情（支持 cms_siteId_vodId 格式实时穿透采集源）
+   * 根据 ID 查询影片详情
    */
   async getMovieById(id: string): Promise<MovieItem | null> {
+    // 1. 如果是直连采集站ID
     if (id.startsWith("cms_")) {
       const parts = id.split("_");
       if (parts.length >= 3) {
@@ -51,6 +44,8 @@ export class MovieService {
         if (cmsMovie) return cmsMovie;
       }
     }
+
+    // 2. 本地热门库
     const movie = this.localMovies.find((m) => m.id === id);
     return movie || null;
   }
@@ -81,13 +76,13 @@ export class MovieService {
   }
 
   /**
-   * 关键字全网与多源聚合搜索
+   * 关键字全网聚合搜索 (同时搜索本地榜单与外部启用的资源站)
    */
   async searchMovies(query: string): Promise<MovieItem[]> {
     const q = query.trim().toLowerCase();
     if (!q) return [];
 
-    // 1. 本地匹配
+    // 1. 本地热门榜单快速过滤
     const localResults = this.localMovies.filter(
       (m) =>
         m.title.toLowerCase().includes(q) ||
@@ -98,26 +93,23 @@ export class MovieService {
         m.summary.toLowerCase().includes(q)
     );
 
-    // 2. 实时跨资源站聚合搜索 (已接入茅台等所有启用资源站)
+    // 2. 跨资源站聚合搜索 (异步并发展开)
     try {
       const cmsResults = await resourceSiteService.searchAcrossSites(query);
 
-      // 去重合并
       const map = new Map<string, MovieItem>();
       localResults.forEach((m) => map.set(m.title, m));
       cmsResults.forEach((m) => {
         if (!map.has(m.title)) {
           map.set(m.title, m);
         } else {
-          // 若已有，合并其播放线路
           const existing = map.get(m.title)!;
           existing.sources.push(...m.sources);
         }
       });
 
       return Array.from(map.values());
-    } catch (e) {
-      console.error("Multi-site search error:", e);
+    } catch {
       return localResults;
     }
   }
