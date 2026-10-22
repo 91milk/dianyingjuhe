@@ -35,7 +35,7 @@ export const MovieGrid: React.FC<MovieGridProps> = ({
           暂无匹配影视资源，可点击右下角让 AI 帮您全网找片
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-4 lg:gap-5">
           {movies.map((movie) => (
             <MovieCard key={movie.id} movie={movie} />
           ))}

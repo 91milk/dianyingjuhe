@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { MovieRecommendation } from "../types";
 import { Play, Star, Sparkles } from "lucide-react";
+import { encodePlayId } from "@/lib/playCipher";
 
 interface AiMovieCardProps {
   recommendation: MovieRecommendation;
@@ -60,7 +61,7 @@ export const AiMovieCard: React.FC<AiMovieCardProps> = ({ recommendation }) => {
           {/* 操作按钮 */}
           <div className="mt-2.5 flex items-center gap-2">
             <Link
-              href={`/watch/${movie.id}`}
+              href={`/play/${encodePlayId(movie.id)}`}
               className="flex-1 flex items-center justify-center gap-1.5 bg-[#ffcf32] hover:bg-[#ffe066] text-black font-semibold text-xs py-1.5 px-3 rounded-lg transition-colors cursor-pointer"
             >
               <Play className="w-3.5 h-3.5 fill-black" />

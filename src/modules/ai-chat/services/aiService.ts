@@ -93,7 +93,7 @@ export class AiMovieService {
             recommendReason: item.aiHighlights?.[0] || `豆瓣 ${item.rating} 分高口碑优质佳作`,
           });
         });
-        responseText = `懂片AI为你找到了与“${userMessage}”最匹配的精选片单：`;
+        responseText = `流量君 AI 为你找到了与“${userMessage}”最匹配的精选片单：`;
       } else {
         const hots = await movieService.getHotMovies(2);
         hots.forEach((item) => {

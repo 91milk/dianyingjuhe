@@ -19,6 +19,7 @@ export interface MacCmsItem {
   vod_id: number | string;
   vod_name: string;
   type_id?: number | string;
+  type_id_1?: number | string;
   type_name?: string;
   vod_en?: string;
   vod_time?: string;

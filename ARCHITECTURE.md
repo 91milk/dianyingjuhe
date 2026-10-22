@@ -1,6 +1,6 @@
-# 懂片 AI (DongPian AI) - 模块化架构与功能扩展指南
+# 流量君 AI - 模块化架构与功能扩展指南
 
-本项目参考并对标 [懂片帝AI (dongpian.ai)](https://www.dongpian.ai/)，采用现代化 **Next.js 16 (App Router) + TypeScript + TailwindCSS 4 + ArtPlayer + HLS.js** 全栈开发，具备高聚合度、低耦合度的**特性模块化设计 (Feature-based Modular Architecture)**，极大方便后续增添任何功能。
+本项目采用现代化 **Next.js 16 (App Router) + TypeScript + TailwindCSS 4 + ArtPlayer + HLS.js** 全栈开发，具备高聚合度、低耦合度的**特性模块化设计 (Feature-based Modular Architecture)**，极大方便后续增添任何功能。
 
 ---
 

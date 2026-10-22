@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resourceSiteService } from "@/modules/collector/services/resourceSiteService";
+import { isSafeExternalUrl } from "@/lib/security";
 
 // GET /api/admin/resources
 export async function GET() {
@@ -30,6 +31,14 @@ export async function POST(request: NextRequest) {
     if (!name || !apiUrl) {
       return NextResponse.json(
         { success: false, error: "名称与API接口地址为必填项" },
+        { status: 400 }
+      );
+    }
+
+    const check = isSafeExternalUrl(apiUrl);
+    if (!check.safe) {
+      return NextResponse.json(
+        { success: false, error: `非法的API接口地址: ${check.reason}` },
         { status: 400 }
       );
     }

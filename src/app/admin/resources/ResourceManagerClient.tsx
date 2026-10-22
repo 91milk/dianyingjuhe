@@ -9,9 +9,7 @@ import {
   Search,
   CheckCircle2,
   XCircle,
-  Clock,
   Trash2,
-  ExternalLink,
   Layers,
   Sparkles,
   Zap,
@@ -39,6 +37,10 @@ export const ResourceManagerClient: React.FC = () => {
   const fetchSites = async () => {
     try {
       const res = await fetch("/api/admin/resources");
+      if (res.status === 401) {
+        window.location.href = "/admin/login";
+        return;
+      }
       const json = await res.json();
       if (json.success) {
         setSites(json.data.sites);
@@ -52,7 +54,29 @@ export const ResourceManagerClient: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchSites();
+    let active = true;
+    const init = async () => {
+      try {
+        const res = await fetch("/api/admin/resources");
+        if (res.status === 401) {
+          window.location.href = "/admin/login";
+          return;
+        }
+        const json = await res.json();
+        if (active && json.success) {
+          setSites(json.data.sites);
+          setStats(json.data.stats);
+        }
+      } catch {
+        // ignore
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    void init();
+    return () => {
+      active = false;
+    };
   }, []);
 
   // 切换启用开关

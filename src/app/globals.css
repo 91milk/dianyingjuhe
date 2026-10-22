@@ -31,11 +31,42 @@
   animation: slideLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* 隐藏横向滚动条 */
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
+/* 全站隐藏滚动条，彻底告别原生粗糙滚动条，同时保留丝滑流畅滚动功能 */
+html,
+body,
+*,
+*::before,
+*::after {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
 }
+
+::-webkit-scrollbar,
+*::-webkit-scrollbar,
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+div::-webkit-scrollbar,
+section::-webkit-scrollbar,
+main::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Edge, Opera */
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+  -webkit-appearance: none !important;
+}
+
+/* 辅助实用类，确保任何容器强力无滚动条 */
+.no-scrollbar,
 .scrollbar-none {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
+
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+

@@ -1,37 +1,101 @@
 import { MovieItem, FilterOptions, MovieCategory } from "../types";
+import { doubanMovies } from "./doubanData";
 import { trendingMovies } from "./trendingService";
 import { mockMovies } from "./mockData";
 import { resourceSiteService } from "@/modules/collector/services/resourceSiteService";
+import { doubanService, isCleanMovieItem } from "./doubanService";
 
 export class MovieService {
-  // 合并公开热门榜单与精选片单，作为首页与发现库的秒开数据基座
-  private localMovies: MovieItem[] = [...trendingMovies, ...mockMovies];
+  // 本地兜底备用片库 (仅当资源站断网时使用)
+  private fallbackMovies: MovieItem[] = [...doubanMovies, ...trendingMovies, ...mockMovies];
 
   /**
-   * 获取精选轮播/焦点影片 (首页秒开)
+   * 获取精选轮播/焦点大片 (100% 引用豆瓣高分口碑与院线年度大作，绝无杂乱会议/晚会)
    */
   async getFeaturedMovies(): Promise<MovieItem[]> {
-    return this.localMovies.filter((m) => m.isFeatured);
+    return doubanService.getFeaturedMovies();
   }
 
   /**
-   * 获取热门爆款推荐
+   * 获取豆瓣口碑排行榜 TOP 10 (殿堂级影史丰碑与高分神作)
+   */
+  async getDoubanTopMovies(limit = 10): Promise<MovieItem[]> {
+    return doubanService.getDoubanTopMovies(limit);
+  }
+
+  /**
+   * 获取全网实时动态更新流（直接拉取资源站当天最新入库，100% 过滤体育赛事、会议杂项）
+   */
+  async getLiveLatestMovies(limit = 12): Promise<MovieItem[]> {
+    try {
+      const items = await resourceSiteService.getLatestFromSites(undefined, 1, limit * 4);
+      const clean = items.filter(isCleanMovieItem);
+      if (clean.length >= limit) return clean.slice(0, limit);
+      if (clean.length > 0) {
+        // 若实时流条数不足，用豆瓣精选补齐，绝不混入体育或会议噪音
+        const seen = new Set(clean.map((c) => c.title.trim().toLowerCase()));
+        const extra = this.fallbackMovies.filter(
+          (m) => isCleanMovieItem(m) && !seen.has(m.title.trim().toLowerCase())
+        );
+        return [...clean, ...extra].slice(0, limit);
+      }
+    } catch {
+      // ignore
+    }
+    return this.fallbackMovies.filter(isCleanMovieItem).slice(0, limit);
+  }
+
+  /**
+   * 获取热门院线大片 (100% 引用豆瓣 2024-2025 院线热映口碑大片)
    */
   async getHotMovies(limit = 8): Promise<MovieItem[]> {
-    return this.localMovies.filter((m) => m.isHot).slice(0, limit);
+    return doubanService.getHotMovies(limit);
   }
 
   /**
-   * 按分类获取热门公开榜单影片 (首屏 0 延迟秒开，不阻塞在第三方采集源上)
+   * 获取热门连载电视剧集 (100% 引用豆瓣高分热门剧集榜单)
+   */
+  async getHotTvs(limit = 8): Promise<MovieItem[]> {
+    return doubanService.getHotTvs(limit);
+  }
+
+  /**
+   * 获取顶流国漫与高燃新番 (100% 引用豆瓣高分动漫神作榜单)
+   */
+  async getHotAnimes(limit = 8): Promise<MovieItem[]> {
+    return doubanService.getHotAnimes(limit);
+  }
+
+  /**
+   * 获取爆款微短剧爽剧精选
+   */
+  async getHotShortPlays(limit = 6): Promise<MovieItem[]> {
+    return doubanService.getHotShortPlays(limit);
+  }
+
+  /**
+   * 按分类获取最新真实影片 (优先结合豆瓣口碑与采集站干净影视)
    */
   async getByCategory(category: MovieCategory, limit = 12): Promise<MovieItem[]> {
-    // 优先从热门公开榜单中返回
-    const items = this.localMovies.filter((m) => m.category === category);
-    return items.slice(0, limit);
+    if (category === "tv") return this.getHotTvs(limit);
+    if (category === "movie") return this.getHotMovies(limit);
+    if (category === "anime") return this.getHotAnimes(limit);
+    if (category === "shortplay") return this.getHotShortPlays(limit);
+
+    try {
+      const liveItems = await resourceSiteService.getLatestFromSites(category, 1, limit * 2);
+      const clean = liveItems.filter(isCleanMovieItem);
+      if (clean.length > 0) {
+        return clean.slice(0, limit);
+      }
+    } catch {
+      // ignore
+    }
+    return this.fallbackMovies.filter((m) => m.category === category && isCleanMovieItem(m)).slice(0, limit);
   }
 
   /**
-   * 根据 ID 查询影片详情
+   * 根据 ID 查询影片详情 (支持直连CMS ID、豆瓣专用ID及全网匹配)
    */
   async getMovieById(id: string): Promise<MovieItem | null> {
     // 1. 如果是直连采集站ID
@@ -45,73 +109,108 @@ export class MovieService {
       }
     }
 
-    // 2. 本地热门库
-    const movie = this.localMovies.find((m) => m.id === id);
-    return movie || null;
+    // 2. 豆瓣专用库及缓存优先查询 (支持 db_xxx, douban_xxx, hot-2024-xxx)
+    const doubanMovie = doubanService.getDoubanById(id);
+    if (doubanMovie) return doubanMovie;
+
+    // 3. 实时采集站缓存池匹配
+    try {
+      const livePool = await resourceSiteService.getLivePool();
+      const match = livePool.find((m) => m.id === id);
+      if (match) return match;
+    } catch {
+      // ignore
+    }
+
+    // 4. 兜底片库
+    return this.fallbackMovies.find((m) => m.id === id) || null;
   }
 
   /**
-   * 综合多条件筛选
+   * 综合多条件筛选 (优先呈现豆瓣口碑精品，并结合实时纯净片库)
    */
   async filterMovies(options: FilterOptions): Promise<MovieItem[]> {
-    return this.localMovies.filter((item) => {
-      if (options.category && item.category !== options.category) {
-        return false;
+    let pool = this.fallbackMovies.filter(isCleanMovieItem);
+    try {
+      const live = await resourceSiteService.getLivePool();
+      if (live.length > 0) {
+        const cleanLive = live.filter(isCleanMovieItem);
+        const seen = new Set(pool.map((m) => m.title.trim().toLowerCase()));
+        const uniqueLive = cleanLive.filter((m) => !seen.has(m.title.trim().toLowerCase()));
+        pool = [...pool, ...uniqueLive];
       }
-      if (options.genre && options.genre !== "全部" && !item.genres.includes(options.genre)) {
-        return false;
+    } catch {
+      // ignore
+    }
+
+    // 若按短剧筛选且当前池中短剧较少，直接穿透加载最新全量短剧
+    if (options.category === "shortplay") {
+      const shortCount = pool.filter((item) => item.category === "shortplay").length;
+      if (shortCount < 8) {
+        try {
+          const liveShorts = await resourceSiteService.fetchLiveShortPlays(36);
+          if (liveShorts.length > 0) {
+            const cleanShorts = liveShorts.filter(isCleanMovieItem);
+            pool = [...cleanShorts, ...pool];
+          }
+        } catch {
+          // ignore
+        }
       }
-      if (options.region && options.region !== "全部" && item.region !== options.region) {
-        return false;
-      }
-      if (options.year && options.year !== "全部" && item.year.toString() !== options.year) {
-        return false;
-      }
-      return true;
-    }).sort((a, b) => {
-      if (options.sort === "rating") return b.rating - a.rating;
-      if (options.sort === "latest") return b.year - a.year;
-      return (b.isHot ? 1 : 0) - (a.isHot ? 1 : 0);
-    });
+    }
+
+    return pool
+      .filter((item) => {
+        if (!isCleanMovieItem(item)) return false;
+        if (options.category && item.category !== options.category) {
+          return false;
+        }
+        if (options.genre && options.genre !== "全部" && !item.genres.includes(options.genre)) {
+          return false;
+        }
+        if (options.region && options.region !== "全部" && item.region !== options.region) {
+          return false;
+        }
+        if (options.year && options.year !== "全部" && item.year.toString() !== options.year) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (options.sort === "rating") return b.rating - a.rating;
+        if (options.sort === "latest") return b.year - a.year;
+        return (b.isHot ? 1 : 0) - (a.isHot ? 1 : 0);
+      });
   }
 
   /**
-   * 关键字全网聚合搜索 (同时搜索本地榜单与外部启用的资源站)
+   * 关键字全网聚合搜索 (实时跨资源站并发展开检索，过滤非影视杂项)
    */
   async searchMovies(query: string): Promise<MovieItem[]> {
     const q = query.trim().toLowerCase();
     if (!q) return [];
 
-    // 1. 本地热门榜单快速过滤
-    const localResults = this.localMovies.filter(
-      (m) =>
-        m.title.toLowerCase().includes(q) ||
-        (m.originalTitle && m.originalTitle.toLowerCase().includes(q)) ||
-        (m.director && m.director.toLowerCase().includes(q)) ||
-        (m.actors && m.actors.some((a) => a.toLowerCase().includes(q))) ||
-        m.genres.some((g) => g.toLowerCase().includes(q)) ||
-        m.summary.toLowerCase().includes(q)
-    );
-
-    // 2. 跨资源站聚合搜索 (异步并发展开)
     try {
       const cmsResults = await resourceSiteService.searchAcrossSites(query);
-
-      const map = new Map<string, MovieItem>();
-      localResults.forEach((m) => map.set(m.title, m));
-      cmsResults.forEach((m) => {
-        if (!map.has(m.title)) {
-          map.set(m.title, m);
-        } else {
-          const existing = map.get(m.title)!;
-          existing.sources.push(...m.sources);
-        }
-      });
-
-      return Array.from(map.values());
+      if (cmsResults.length > 0) {
+        const cleanResults = cmsResults.filter(isCleanMovieItem);
+        if (cleanResults.length > 0) return cleanResults;
+      }
     } catch {
-      return localResults;
+      // ignore
     }
+
+    return this.fallbackMovies.filter(
+      (m) =>
+        isCleanMovieItem(m) && (
+          m.title.toLowerCase().includes(q) ||
+          (m.originalTitle && m.originalTitle.toLowerCase().includes(q)) ||
+          (m.director && m.director.toLowerCase().includes(q)) ||
+          (m.actors && m.actors.some((a) => a.toLowerCase().includes(q))) ||
+          m.genres.some((g) => g.toLowerCase().includes(q)) ||
+          m.summary.toLowerCase().includes(q)
+        )
+    );
   }
 
   /**
@@ -120,7 +219,16 @@ export class MovieService {
   async getSimilarMovies(id: string, limit = 4): Promise<MovieItem[]> {
     const target = await this.getMovieById(id);
     if (!target) return [];
-    return this.localMovies
+
+    let pool = this.fallbackMovies;
+    try {
+      const live = await resourceSiteService.getLivePool();
+      if (live.length > 0) pool = live;
+    } catch {
+      // ignore
+    }
+
+    return pool
       .filter((m) => m.id !== id && (m.category === target.category || m.genres.some((g) => target.genres.includes(g))))
       .slice(0, limit);
   }

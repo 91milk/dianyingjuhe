@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resourceSiteService } from "@/modules/collector/services/resourceSiteService";
 import { ResourceSite } from "@/modules/collector/types";
+import { isSafeExternalUrl } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,6 +12,14 @@ export async function POST(request: NextRequest) {
     if (id) {
       targetSite = resourceSiteService.getSites().find((s) => s.id === id);
     } else if (apiUrl) {
+      const check = isSafeExternalUrl(apiUrl);
+      if (!check.safe) {
+        return NextResponse.json(
+          { success: false, error: `非法的测试API地址: ${check.reason}` },
+          { status: 400 }
+        );
+      }
+
       targetSite = {
         id: "temp",
         name: "临时测试",

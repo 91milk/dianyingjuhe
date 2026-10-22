@@ -1,7 +1,7 @@
 [
   {
     "id": "jinying",
-    "name": "金鹰资源",
+    "name": "全网资源",
     "apiUrl": "https://jyzyapi.com/provide/vod/from/jinyingyun/at/json",
     "type": "maccms_v10",
     "playFrom": "jinyingyun",

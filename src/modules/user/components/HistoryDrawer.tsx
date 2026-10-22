@@ -5,6 +5,7 @@ import { HistoryRecord } from "../types";
 import { historyService } from "../services/historyService";
 import { X, Clock, Play, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { encodePlayId } from "@/lib/playCipher";
 
 interface HistoryDrawerProps {
   isOpen: boolean;
@@ -13,12 +14,14 @@ interface HistoryDrawerProps {
 
 export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({ isOpen, onClose }) => {
   const [history, setHistory] = useState<HistoryRecord[]>([]);
+  const [prevOpen, setPrevOpen] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      setHistory(historyService.getHistory());
-    }
-  }, [isOpen]);
+  if (isOpen && !prevOpen) {
+    setPrevOpen(true);
+    setHistory(historyService.getHistory());
+  } else if (!isOpen && prevOpen) {
+    setPrevOpen(false);
+  }
 
   if (!isOpen) return null;
 
@@ -74,7 +77,7 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({ isOpen, onClose })
               return (
                 <Link
                   key={item.movieId}
-                  href={`/watch/${item.movieId}?source=${item.sourceId}&ep=${item.episodeId}`}
+                  href={`/play/${encodePlayId(item.movieId)}?source=${item.sourceId}&ep=${item.episodeId}`}
                   onClick={onClose}
                   className="group relative flex gap-3 p-2 rounded-xl bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/80 transition"
                 >

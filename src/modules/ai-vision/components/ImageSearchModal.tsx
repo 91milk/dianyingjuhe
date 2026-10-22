@@ -5,6 +5,7 @@ import { visionService } from "../services/visionService";
 import { VisionSearchResult } from "../types";
 import { X, UploadCloud, ImageIcon, Play, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { encodePlayId } from "@/lib/playCipher";
 
 interface ImageSearchModalProps {
   isOpen: boolean;
@@ -127,7 +128,7 @@ export const ImageSearchModal: React.FC<ImageSearchModalProps> = ({ isOpen, onCl
                     </div>
 
                     <Link
-                      href={`/watch/${res.movie.id}`}
+                      href={`/play/${encodePlayId(res.movie.id)}`}
                       onClick={onClose}
                       className="px-3 py-1.5 bg-[#ffcf32] text-black font-semibold text-xs rounded-lg flex items-center gap-1 hover:bg-[#ffe066] transition cursor-pointer shrink-0"
                     >

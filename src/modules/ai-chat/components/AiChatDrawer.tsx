@@ -23,7 +23,7 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
     {
       id: "welcome-1",
       role: "assistant",
-      content: "你好！我是你的智能懂片助手。你可以用任何自然语言向我描述：\n• 想看的剧情细节（如“男主失忆被困在小镇”）\n• 当下的心情（如“下班太累了，求不带脑子的搞笑喜剧”）\n• 某部电影的看点解析或找同款佳作！",
+      content: "你好！我是你的智能观影助手流量君 AI。你可以用任何自然语言向我描述：\n• 想看的剧情细节（如“男主失忆被困在小镇”）\n• 当下的心情（如“下班太累了，求不带脑子的搞笑喜剧”）\n• 某部电影的看点解析或找同款佳作！",
       createdAt: 0,
     },
   ]);
@@ -101,7 +101,7 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
               <Sparkles className="w-4 h-4 fill-black" />
             </div>
             <div>
-              <h3 className="font-bold text-white text-sm">懂片 AI 找片助手</h3>
+              <h3 className="font-bold text-white text-sm">流量君 AI 找片助手</h3>
               <p className="text-[11px] text-zinc-400">自然语言找片 · 剧情模糊召回</p>
             </div>
           </div>

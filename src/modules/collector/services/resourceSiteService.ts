@@ -3,6 +3,9 @@ import path from "path";
 import { ResourceSite, MacCmsResponse, MacCmsItem } from "../types";
 import { MovieItem } from "@/modules/movie/types";
 import { MacCmsParser } from "./maccmsParser";
+import { isSafeExternalUrl } from "@/lib/security";
+import { siteConfig } from "@/config/site";
+import { deduplicateSources } from "@/modules/movie/utils/sourceDeduplicator";
 
 const SITES_FILE_PATH = path.join(process.cwd(), "data", "resource-sites.json");
 const CACHE_FILE_PATH = path.join(process.cwd(), "data", "cms-cache.json");
@@ -10,7 +13,7 @@ const CACHE_FILE_PATH = path.join(process.cwd(), "data", "cms-cache.json");
 const DEFAULT_SITES: ResourceSite[] = [
   {
     id: "jinying",
-    name: "金鹰资源",
+    name: "全网资源",
     apiUrl: "https://jyzyapi.com/provide/vod/from/jinyingyun/at/json",
     type: "maccms_v10",
     playFrom: "jinyingyun",
@@ -181,12 +184,18 @@ export class ResourceSiteService {
     playFrom?: string;
     weight?: number;
   }): Promise<ResourceSite> {
+    const trimmedUrl = input.apiUrl.trim();
+    const check = isSafeExternalUrl(trimmedUrl);
+    if (!check.safe) {
+      throw new Error(`非法的资源站 API 地址: ${check.reason}`);
+    }
+
     const sites = this.getSites();
     const id = `site_${Date.now()}`;
     const newSite: ResourceSite = {
       id,
       name: input.name.trim(),
-      apiUrl: input.apiUrl.trim(),
+      apiUrl: trimmedUrl,
       type: "maccms_v10",
       playFrom: input.playFrom?.trim() || "m3u8",
       isEnabled: true,
@@ -233,9 +242,14 @@ export class ResourceSiteService {
     totalItems?: number;
     error?: string;
   }> {
+    const check = isSafeExternalUrl(site.apiUrl);
+    if (!check.safe) {
+      return { status: "offline", responseTime: 0, error: `禁止请求该地址: ${check.reason}` };
+    }
+
     const start = Date.now();
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 6000);
+    const timer = setTimeout(() => controller.abort(), siteConfig.collector.timeoutMs);
 
     try {
       const sep = site.apiUrl.includes("?") ? "&" : "?";
@@ -373,15 +387,18 @@ export class ResourceSiteService {
         m.summary.toLowerCase().includes(q)
     );
 
-    // 3. 去重合并
+    // 3. 去重合并影片与线路
     const movieMap = new Map<string, MovieItem>();
     [...remoteCombined, ...cachedItems].forEach((item) => {
       const key = item.title.trim().toLowerCase();
       if (!movieMap.has(key)) {
-        movieMap.set(key, item);
+        movieMap.set(key, {
+          ...item,
+          sources: deduplicateSources(item.sources),
+        });
       } else {
         const existing = movieMap.get(key)!;
-        existing.sources.push(...item.sources);
+        existing.sources = deduplicateSources([...existing.sources, ...item.sources]);
       }
     });
 
@@ -396,11 +413,11 @@ export class ResourceSiteService {
     if (!site) return null;
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 6000);
+    const timer = setTimeout(() => controller.abort(), siteConfig.collector.detailTimeoutMs);
 
     try {
       const sep = site.apiUrl.includes("?") ? "&" : "?";
-      const url = `${site.apiUrl}${sep}ac=videolist&ids=${vodId}`;
+      const url = `${site.apiUrl}${sep}ac=videolist&ids=${encodeURIComponent(vodId)}`;
       const res = await fetch(url, {
         signal: controller.signal,
         headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
@@ -419,38 +436,491 @@ export class ResourceSiteService {
     }
   }
 
-  /**
-   * 从已启用的高权重资源站拉取最新入库的影片
-   */
-  async getLatestFromSites(categoryName?: string, page = 1, limit = 18): Promise<MovieItem[]> {
-    const primarySite = this.getSites().find((s) => s.isEnabled) || this.getSites()[0];
-    if (!primarySite) return [];
+  private livePoolCache: { timestamp: number; items: MovieItem[] } | null = null;
+  private shortPlaysCache: { timestamp: number; items: MovieItem[] } | null = null;
+  private categoryCache = new Map<number, { timestamp: number; items: MovieItem[] }>();
+  private isRefreshingLivePool = false;
+  private isRefreshingShortPlays = false;
+  private refreshingCategories = new Set<number>();
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
+  /**
+   * 极速获取实时片库 (SWR 策略：本地持久化秒开 + 内存毫秒级返回 + 后台异步静默增量刷新)
+   */
+  async getLivePool(): Promise<MovieItem[]> {
+    // 1. 若内存缓存不存在，先从本地已保存的增量缓存秒开
+    if (!this.livePoolCache) {
+      const diskCached = this.getCachedItems();
+      if (diskCached.length > 0) {
+        this.livePoolCache = { timestamp: performance.now(), items: diskCached };
+        this.refreshLivePoolInBackground();
+        return this.livePoolCache.items;
+      }
+    }
+
+    // 2. 若内存缓存处于 10 分钟有效期内，0 延迟极速返回
+    if (this.livePoolCache && performance.now() - this.livePoolCache.timestamp < 1000 * 60 * 10) {
+      return this.livePoolCache.items;
+    }
+
+    // 3. 若缓存已过期但存在旧数据：遵循 SWR 策略，优先立即返回旧数据保障页面秒开，同时在后台静默拉取最新
+    if (this.livePoolCache && this.livePoolCache.items.length > 0) {
+      this.refreshLivePoolInBackground();
+      return this.livePoolCache.items;
+    }
+
+    // 4. 仅当完全没有任何数据（全新空盘启动）时，才同步等待拉取
+    return this.refreshLivePool();
+  }
+
+  private refreshLivePoolInBackground(): void {
+    if (this.isRefreshingLivePool) return;
+    this.isRefreshingLivePool = true;
+    this.refreshLivePool()
+      .catch((err) => {
+        console.error("Background live pool refresh error:", err);
+      })
+      .finally(() => {
+        this.isRefreshingLivePool = false;
+      });
+  }
+
+  /**
+   * 真实并发拉取三大核心资源站最新片源并聚合持久化
+   */
+  async refreshLivePool(): Promise<MovieItem[]> {
+    const enabledSites = this.getSites()
+      .filter((s) => s.isEnabled)
+      .slice(0, 3); // 优先并发聚合前3大核心资源站 (金鹰、茅台、如意)
+
+    if (enabledSites.length === 0) {
+      return this.getCachedItems();
+    }
+
+    const fetchTasks: Promise<MovieItem[]>[] = [];
+
+    enabledSites.forEach((site) => {
+      // 拉取第 1 页
+      fetchTasks.push(
+        (async () => {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 4500);
+          try {
+            const sep = site.apiUrl.includes("?") ? "&" : "?";
+            const url = `${site.apiUrl}${sep}ac=videolist&pg=1`;
+            const res = await fetch(url, {
+              signal: controller.signal,
+              headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+            });
+            clearTimeout(timer);
+            if (!res.ok) return [];
+            const data: MacCmsResponse = await res.json();
+            if (!data.list || !Array.isArray(data.list)) return [];
+            return data.list.map((item) => MacCmsParser.toMovieItem(item, site));
+          } catch {
+            clearTimeout(timer);
+            return [];
+          }
+        })()
+      );
+
+      // 全网源等主站多拉取第 2 页，扩充丰富度
+      if (site.id === "jinying" || site.id === "maotai") {
+        fetchTasks.push(
+          (async () => {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 4500);
+            try {
+              const sep = site.apiUrl.includes("?") ? "&" : "?";
+              const url = `${site.apiUrl}${sep}ac=videolist&pg=2`;
+              const res = await fetch(url, {
+                signal: controller.signal,
+                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+              });
+              clearTimeout(timer);
+              if (!res.ok) return [];
+              const data: MacCmsResponse = await res.json();
+              if (!data.list || !Array.isArray(data.list)) return [];
+              return data.list.map((item) => MacCmsParser.toMovieItem(item, site));
+            } catch {
+              clearTimeout(timer);
+              return [];
+            }
+          })()
+        );
+
+        // 核心加固：额外并发拉取电影专区 (动作片、科幻片、爱情片、喜剧片，彻底解决电影板块内容少的问题)
+        fetchTasks.push(
+          (async () => {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 4500);
+            try {
+              const sep = site.apiUrl.includes("?") ? "&" : "?";
+              const url = `${site.apiUrl}${sep}ac=videolist&t=2&pg=1`;
+              const res = await fetch(url, {
+                signal: controller.signal,
+                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+              });
+              clearTimeout(timer);
+              if (!res.ok) return [];
+              const data: MacCmsResponse = await res.json();
+              if (!data.list || !Array.isArray(data.list)) return [];
+              return data.list.map((item) => MacCmsParser.toMovieItem(item, site));
+            } catch {
+              clearTimeout(timer);
+              return [];
+            }
+          })()
+        );
+
+        fetchTasks.push(
+          (async () => {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 4500);
+            try {
+              const sep = site.apiUrl.includes("?") ? "&" : "?";
+              const url = `${site.apiUrl}${sep}ac=videolist&t=9&pg=1`; // 动作片专区
+              const res = await fetch(url, {
+                signal: controller.signal,
+                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+              });
+              clearTimeout(timer);
+              if (!res.ok) return [];
+              const data: MacCmsResponse = await res.json();
+              if (!data.list || !Array.isArray(data.list)) return [];
+              return data.list.map((item) => MacCmsParser.toMovieItem(item, site));
+            } catch {
+              clearTimeout(timer);
+              return [];
+            }
+          })()
+        );
+
+        fetchTasks.push(
+          (async () => {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 4500);
+            try {
+              const sep = site.apiUrl.includes("?") ? "&" : "?";
+              const url = `${site.apiUrl}${sep}ac=videolist&t=12&pg=1`; // 科幻片专区
+              const res = await fetch(url, {
+                signal: controller.signal,
+                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+              });
+              clearTimeout(timer);
+              if (!res.ok) return [];
+              const data: MacCmsResponse = await res.json();
+              if (!data.list || !Array.isArray(data.list)) return [];
+              return data.list.map((item) => MacCmsParser.toMovieItem(item, site));
+            } catch {
+              clearTimeout(timer);
+              return [];
+            }
+          })()
+        );
+
+        // 额外并发拉取热门短剧专区 (现代都市短剧、反转爽剧，确保短剧分类数据实时充沛)
+        fetchTasks.push(
+          (async () => {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 4500);
+            try {
+              const sep = site.apiUrl.includes("?") ? "&" : "?";
+              const url = `${site.apiUrl}${sep}ac=videolist&t=41&pg=1`;
+              const res = await fetch(url, {
+                signal: controller.signal,
+                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+              });
+              clearTimeout(timer);
+              if (!res.ok) return [];
+              const data: MacCmsResponse = await res.json();
+              if (!data.list || !Array.isArray(data.list)) return [];
+              return data.list.map((item) => MacCmsParser.toMovieItem(item, site));
+            } catch {
+              clearTimeout(timer);
+              return [];
+            }
+          })()
+        );
+
+        fetchTasks.push(
+          (async () => {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 4500);
+            try {
+              const sep = site.apiUrl.includes("?") ? "&" : "?";
+              const url = `${site.apiUrl}${sep}ac=videolist&t=45&pg=1`;
+              const res = await fetch(url, {
+                signal: controller.signal,
+                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+              });
+              clearTimeout(timer);
+              if (!res.ok) return [];
+              const data: MacCmsResponse = await res.json();
+              if (!data.list || !Array.isArray(data.list)) return [];
+              return data.list.map((item) => MacCmsParser.toMovieItem(item, site));
+            } catch {
+              clearTimeout(timer);
+              return [];
+            }
+          })()
+        );
+      }
+    });
 
     try {
-      const sep = primarySite.apiUrl.includes("?") ? "&" : "?";
-      const url = `${primarySite.apiUrl}${sep}ac=videolist&pg=${page}`;
-      const res = await fetch(url, {
-        signal: controller.signal,
-        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+      const results = await Promise.allSettled(fetchTasks);
+      const combined: MovieItem[] = [];
+
+      results.forEach((res) => {
+        if (res.status === "fulfilled" && Array.isArray(res.value)) {
+          combined.push(...res.value);
+        }
       });
-      clearTimeout(timer);
 
-      if (!res.ok) return [];
-      const data: MacCmsResponse = await res.json();
-      if (!data.list || !Array.isArray(data.list)) return [];
+      if (combined.length > 0) {
+        // 去重合并
+        const map = new Map<string, MovieItem>();
+        combined.forEach((item) => {
+          const key = item.title.trim().toLowerCase();
+          if (!map.has(key)) {
+            map.set(key, item);
+          } else {
+            const exist = map.get(key)!;
+            exist.sources.push(...item.sources);
+          }
+        });
 
-      let list = data.list.map((item) => MacCmsParser.toMovieItem(item, primarySite));
-      if (categoryName) {
-        list = list.filter((m) => m.category === categoryName);
+        const distinctItems = Array.from(map.values()).filter((item) => {
+          const text = (item.title + " " + item.genres.join(" ")).toLowerCase();
+          return (
+            !text.includes("伦理") &&
+            !text.includes("情色") &&
+            !text.includes("擦边") &&
+            !text.includes("福利")
+          );
+        });
+
+        this.livePoolCache = { timestamp: performance.now(), items: distinctItems };
+
+        // 异步持久化到本地缓存文件，供断网或冷启动秒开兜底
+        try {
+          fs.writeFileSync(CACHE_FILE_PATH, JSON.stringify(distinctItems.slice(0, 120), null, 2));
+        } catch {
+          // ignore
+        }
+
+        return distinctItems;
       }
-      return list.slice(0, limit);
-    } catch {
-      clearTimeout(timer);
-      return [];
+    } catch (e) {
+      console.error("Failed to aggregate live pool:", e);
     }
+
+    // 若网络请求受限，退回使用本地持久化缓存
+    const fallbackCached = this.getCachedItems();
+    if (fallbackCached.length > 0) return fallbackCached;
+
+    return [];
+  }
+
+  /**
+   * 动态穿透拉取特定类型的影视数据 (支持 SWR 内存缓存秒开)
+   */
+  async fetchLiveCategory(typeId: number, limit = 24): Promise<MovieItem[]> {
+    const cached = this.categoryCache.get(typeId);
+    if (cached) {
+      if (performance.now() - cached.timestamp < 1000 * 60 * 10) {
+        return cached.items.slice(0, limit);
+      }
+      this.refreshCategoryInBackground(typeId, limit);
+      return cached.items.slice(0, limit);
+    }
+
+    return this.executeFetchCategory(typeId, limit);
+  }
+
+  private refreshCategoryInBackground(typeId: number, limit: number): void {
+    if (this.refreshingCategories.has(typeId)) return;
+    this.refreshingCategories.add(typeId);
+    this.executeFetchCategory(typeId, limit)
+      .catch((err) => console.error(`Background refresh category ${typeId} error:`, err))
+      .finally(() => {
+        this.refreshingCategories.delete(typeId);
+      });
+  }
+
+  private async executeFetchCategory(typeId: number, limit = 24): Promise<MovieItem[]> {
+    const enabledSites = this.getSites().filter((s) => s.isEnabled);
+    const targetSite =
+      enabledSites.find((s) => s.id === "jinying") ||
+      enabledSites.find((s) => s.id === "maotai") ||
+      enabledSites[0];
+
+    if (!targetSite) return [];
+
+    const tasks = [1, 2].map((pg) =>
+      (async () => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 4500);
+        try {
+          const sep = targetSite.apiUrl.includes("?") ? "&" : "?";
+          const url = `${targetSite.apiUrl}${sep}ac=videolist&t=${typeId}&pg=${pg}`;
+          const res = await fetch(url, {
+            signal: controller.signal,
+            headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+          });
+          clearTimeout(timer);
+          if (!res.ok) return [];
+          const data: MacCmsResponse = await res.json();
+          if (!data.list || !Array.isArray(data.list)) return [];
+          return data.list.map((item) => MacCmsParser.toMovieItem(item, targetSite));
+        } catch {
+          clearTimeout(timer);
+          return [];
+        }
+      })()
+    );
+
+    const settled = await Promise.allSettled(tasks);
+    const allItems: MovieItem[] = [];
+    settled.forEach((s) => {
+      if (s.status === "fulfilled" && Array.isArray(s.value)) {
+        allItems.push(...s.value);
+      }
+    });
+
+    const map = new Map<string, MovieItem>();
+    allItems.forEach((m) => {
+      if (!map.has(m.title)) map.set(m.title, m);
+    });
+
+    const distinct = Array.from(map.values());
+    this.categoryCache.set(typeId, { timestamp: performance.now(), items: distinct });
+    return distinct.slice(0, limit);
+  }
+
+  /**
+   * 独立快速穿透抓取真实微短剧列表 (支持 SWR 秒开)
+   */
+  async fetchLiveShortPlays(limit = 24): Promise<MovieItem[]> {
+    if (this.shortPlaysCache) {
+      if (performance.now() - this.shortPlaysCache.timestamp < 1000 * 60 * 10) {
+        return this.shortPlaysCache.items.slice(0, limit);
+      }
+      this.refreshShortPlaysInBackground(limit);
+      return this.shortPlaysCache.items.slice(0, limit);
+    }
+
+    // 优先从现有片库中抽取 shortplay
+    const pool = this.livePoolCache?.items || [];
+    const poolShorts = pool.filter((m) => m.category === "shortplay");
+    if (poolShorts.length >= 6) {
+      this.shortPlaysCache = { timestamp: performance.now(), items: poolShorts };
+      this.refreshShortPlaysInBackground(limit);
+      return poolShorts.slice(0, limit);
+    }
+
+    return this.executeFetchShortPlays(limit);
+  }
+
+  private refreshShortPlaysInBackground(limit: number): void {
+    if (this.isRefreshingShortPlays) return;
+    this.isRefreshingShortPlays = true;
+    this.executeFetchShortPlays(limit)
+      .catch((err) => console.error("Background refresh short plays error:", err))
+      .finally(() => {
+        this.isRefreshingShortPlays = false;
+      });
+  }
+
+  private async executeFetchShortPlays(limit = 24): Promise<MovieItem[]> {
+    const enabledSites = this.getSites().filter((s) => s.isEnabled);
+    const targetSite =
+      enabledSites.find((s) => s.id === "jinying") ||
+      enabledSites.find((s) => s.id === "maotai") ||
+      enabledSites[0];
+
+    if (!targetSite) return [];
+
+    const shortTypes = [41, 45, 40]; // 现代都市、反转爽剧、古装仙侠
+    const tasks = shortTypes.map((tid) =>
+      (async () => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 4500);
+        try {
+          const sep = targetSite.apiUrl.includes("?") ? "&" : "?";
+          const url = `${targetSite.apiUrl}${sep}ac=videolist&t=${tid}&pg=1`;
+          const res = await fetch(url, {
+            signal: controller.signal,
+            headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+          });
+          clearTimeout(timer);
+          if (!res.ok) return [];
+          const data: MacCmsResponse = await res.json();
+          if (!data.list || !Array.isArray(data.list)) return [];
+          return data.list.map((item) => MacCmsParser.toMovieItem(item, targetSite));
+        } catch {
+          clearTimeout(timer);
+          return [];
+        }
+      })()
+    );
+
+    const settled = await Promise.allSettled(tasks);
+    const allItems: MovieItem[] = [];
+    settled.forEach((s) => {
+      if (s.status === "fulfilled" && Array.isArray(s.value)) {
+        allItems.push(...s.value);
+      }
+    });
+
+    const map = new Map<string, MovieItem>();
+    allItems.forEach((m) => {
+      if (!map.has(m.title)) map.set(m.title, m);
+    });
+
+    const distinctShorts = Array.from(map.values());
+    this.shortPlaysCache = { timestamp: performance.now(), items: distinctShorts };
+
+    return distinctShorts.slice(0, limit);
+  }
+
+  /**
+   * 从已启用的高权重资源站拉取最新入库的影片 (支持分类过滤)
+   */
+  async getLatestFromSites(categoryName?: string, page = 1, limit = 18): Promise<MovieItem[]> {
+    const pool = await this.getLivePool();
+    let filtered = pool;
+    if (categoryName) {
+      filtered = filtered.filter((m) => m.category === categoryName);
+    }
+    // 若请求电影但池中较少，启动实时穿透拉取动作/科幻/喜剧电影
+    if (categoryName === "movie" && filtered.length < 16) {
+      try {
+        const liveMovies = await this.fetchLiveCategory(2, limit); // t=2 为电影全量
+        if (liveMovies.length > 0) {
+          const map = new Map<string, MovieItem>();
+          [...liveMovies, ...filtered].forEach((m) => {
+            if (!map.has(m.title)) map.set(m.title, m);
+          });
+          return Array.from(map.values()).slice(0, limit);
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // 若请求短剧但内存池较少，启动实时穿透拉取
+    if (categoryName === "shortplay" && filtered.length < 8) {
+      try {
+        const liveShorts = await this.fetchLiveShortPlays(limit);
+        if (liveShorts.length > 0) {
+          return liveShorts.slice(0, limit);
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return filtered.slice(0, limit);
   }
 }
 

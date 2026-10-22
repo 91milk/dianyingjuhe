@@ -1,26 +1,64 @@
 import { MovieItem, PlaySource, Episode, MovieCategory } from "@/modules/movie/types";
 import { MacCmsItem, ResourceSite } from "../types";
+import { cleanSiteName, deduplicateSources } from "@/modules/movie/utils/sourceDeduplicator";
 
 export class MacCmsParser {
   /**
    * 将苹果CMS分类名称映射为系统的 MovieCategory
    */
-  static parseCategory(typeName: string = ""): MovieCategory {
-    const t = typeName.toLowerCase();
-    if (t.includes("短剧") || t.includes("爽剧")) return "shortplay";
-    if (t.includes("动漫") || t.includes("动画") || t.includes("番剧")) return "anime";
-    if (t.includes("综艺") || t.includes("娱乐")) return "variety";
+  /**
+   * 将苹果CMS分类名称精确映射为系统的 MovieCategory
+   */
+  static parseCategory(
+    typeName: string = "",
+    typeId1?: number | string,
+    vodClass?: string
+  ): MovieCategory {
+    // 0. 若父级分类明确为短剧 (MacCMS 标准父分类 ID 30)
+    if (Number(typeId1) === 30) {
+      return "shortplay";
+    }
+
+    const t = (typeName + " " + (vodClass || "")).toLowerCase();
+
+    // 1. 微短剧 (高频细分标签与典型分类名)
     if (
-      t.includes("电视剧") ||
-      t.includes("国产剧") ||
-      t.includes("日剧") ||
-      t.includes("韩剧") ||
-      t.includes("美剧") ||
-      t.includes("泰剧") ||
-      t.includes("海外剧")
+      t.includes("短剧") ||
+      t.includes("爽剧") ||
+      t.includes("现代都市") ||
+      t.includes("古装仙侠") ||
+      t.includes("穿越年代") ||
+      t.includes("言情总裁") ||
+      t.includes("重生民国") ||
+      t.includes("反转爽剧") ||
+      t.includes("脑洞悬疑") ||
+      t.includes("漫剧") ||
+      t.includes("逆袭") ||
+      t.includes("战神")
     ) {
+      return "shortplay";
+    }
+
+    // 2. 动漫
+    if (t.includes("动漫") || t.includes("动画") || t.includes("番剧") || t.includes("二次元")) {
+      return "anime";
+    }
+
+    // 3. 综艺
+    if (t.includes("综艺") || t.includes("娱乐") || t.includes("脱口秀") || t.includes("真人秀")) {
+      return "variety";
+    }
+
+    // 4. 电影 (动作片、科幻片、剧情片、喜剧片等)
+    if (t.includes("片") || t.includes("电影") || t.includes("影院")) {
+      return "movie";
+    }
+
+    // 5. 电视剧 (欧美剧、内地剧、韩剧、日剧等)
+    if (t.includes("剧")) {
       return "tv";
     }
+
     return "movie";
   }
 
@@ -29,6 +67,28 @@ export class MacCmsParser {
    */
   static cleanHtml(html: string = ""): string {
     return html.replace(/<[^>]*>?/gm, "").trim();
+  }
+
+  /**
+   * 智能规范化播放地址（补全缺少 index.m3u8 的流地址，并安全编码特殊字符）
+   */
+  static normalizePlayUrl(rawUrl: string): string {
+    let url = rawUrl.trim();
+    if (!url) return "";
+
+    // 1. 如果是以 /play/xxxx 结尾且没有扩展名（酷客/全网源/暴风等特定直链流）
+    if (/\/play\/[a-zA-Z0-9_-]+$/.test(url)) {
+      url = `${url}/index.m3u8`;
+    }
+
+    // 2. 避免中文或特殊字符路径导致播放器请求 400 失败
+    try {
+      url = encodeURI(decodeURI(url));
+    } catch {
+      // ignore
+    }
+
+    return url;
   }
 
   /**
@@ -59,7 +119,8 @@ export class MacCmsParser {
         .map((epItem, epIdx) => {
           const parts = epItem.split("$");
           const name = parts[0] ? parts[0].trim() : `第${epIdx + 1}集`;
-          const url = parts[1] ? parts[1].trim() : "";
+          const rawUrl = parts[1] ? parts[1].trim() : "";
+          const url = this.normalizePlayUrl(rawUrl);
           return {
             id: `ep-${epIdx + 1}`,
             name,
@@ -69,22 +130,23 @@ export class MacCmsParser {
         .filter((ep) => ep.url.length > 0);
 
       if (episodes.length > 0) {
+        const cleanName = cleanSiteName(siteName);
         sources.push({
           id: `src-${siteId}-${item.vod_id}-${fromName}-${idx}`,
-          name: `${siteName} · ${fromName.toUpperCase()}`,
+          name: cleanName,
           episodes,
         });
       }
     });
 
-    return sources;
+    return deduplicateSources(sources);
   }
 
   /**
    * 将 MacCMS 单条数据映射为标准 MovieItem
    */
   static toMovieItem(item: MacCmsItem, site: ResourceSite): MovieItem {
-    const category = this.parseCategory(item.type_name);
+    const category = this.parseCategory(item.type_name, item.type_id_1, item.vod_class);
     const sources = this.parsePlaySources(item, site.name, site.id);
 
     const rawRating = parseFloat(item.vod_score || "0");
