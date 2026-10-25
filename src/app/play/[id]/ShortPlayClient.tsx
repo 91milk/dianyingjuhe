@@ -298,7 +298,7 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
                 onPlaybackError={handlePlaybackFailure}
               >
                 {/* 播放器左上角：画幅横屏/竖屏快速切换按钮 */}
-                <div className="absolute top-3 left-3 z-50 select-none">
+                <div className="absolute top-3 left-3 z-40 select-none">
                   <button
                     onClick={toggleAspectMode}
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-black/80 hover:bg-black/95 text-white border border-zinc-700/80 hover:border-amber-400/80 backdrop-blur-md shadow-2xl cursor-pointer transition-all hover:scale-105 active:scale-95 group text-xs font-bold"
