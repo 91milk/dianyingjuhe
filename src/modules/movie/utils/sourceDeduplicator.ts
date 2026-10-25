@@ -1,7 +1,7 @@
 import { PlaySource } from "@/modules/movie/types";
 
-// 常见 MacCMS 技术播放器代号（如 BFZYM3U8, HNM3U8, LZM3U8, JINYINGYUN, FFM3U8 等）
-const TECH_SUFFIX_REGEX = /[\s·\-_/]+(?:[a-zA-Z0-9_-]*(?:m3u8|yun|zy|api|bfzym3u8|lzm3u8|hnm3u8|ffm3u8|mtm3u8|jinyingyun|ruyi|modum3u8|dplayer|iframe))[a-zA-Z0-9_-]*/gi;
+// 常见 MacCMS 技术播放器代号（如 BFZYM3U8, HNM3U8, LZM3U8, JINYINGYUN, FFM3U8, YUN, MP4 等）
+const TECH_SUFFIX_REGEX = /[\s·\-_/]+(?:[a-zA-Z0-9_-]*(?:m3u8|yun|zy|api|bfzym3u8|lzm3u8|hnm3u8|ffm3u8|mtm3u8|jinyingyun|ruyi|modum3u8|dplayer|iframe|play|line))[a-zA-Z0-9_-]*/gi;
 
 /**
  * 提取并规范化资源站纯净名称（去除技术代号黑话，统一品牌名）
@@ -12,10 +12,14 @@ export function cleanSiteName(rawName: string = ""): string {
   // 1. 替换历史残留词汇
   let name = rawName.replace(/金鹰/g, "全网").trim();
 
-  // 2. 清理类似 " · BFZYM3U8", "-HNm3u8", "_lzm3u8" 等技术播放器编码
-  name = name.replace(TECH_SUFFIX_REGEX, "").trim();
+  // 2. 清理括号内的代号，如 (bfzym3u8), [m3u8] 等
+  name = name.replace(/[\(\[（【][a-zA-Z0-9_-]*(?:m3u8|yun|zy|api|play)[a-zA-Z0-9_-]*[\)\]）】]/gi, "").trim();
 
-  // 3. 移除末尾遗留的标点符号
+  // 3. 清理类似 " · BFZYM3U8", "-HNm3u8", "_lzm3u8", " 1线", " 2线" 等技术播放器编码或历史线号
+  name = name.replace(TECH_SUFFIX_REGEX, "").trim();
+  name = name.replace(/[\s·\-_/]+[0-9]+线$/i, "").trim();
+
+  // 4. 移除末尾遗留的标点符号
   name = name.replace(/[\s·\-_/:：]+$/, "").trim();
 
   return name || "全网资源";
@@ -36,9 +40,10 @@ function normalizeUrlForCompare(url: string = ""): string {
 
 /**
  * 智能聚合与去重算法：
- * 1. 同一资源站只保留集数最完整、最高清的线路，自动剔除只有 1 集的残缺项/预告片
- * 2. 跨站点识别相同切片地址，剔除完全镜像的冗余源
- * 3. 彻底清除 BFZYM3U8、LZM3U8 等技术后缀，呈现清爽名称
+ * 1. 同一资源站严格只保留 1 条最佳资源（绝对优先 m3u8 直链；仅当完全无 m3u8 时才降级保留云播）
+ * 2. 同一个资源站绝不重复展示 2 种或多条资源，杜绝 "1线 / 2线" 本质同一资源的冗余
+ * 3. 跨站点识别相同切片地址，剔除完全镜像的冗余源
+ * 4. 纯净展示资源站品牌名称（如 "暴风资源"、"茅台资源"、"全网资源"），界面清爽
  */
 export function deduplicateSources(sources: PlaySource[]): PlaySource[] {
   if (!Array.isArray(sources) || sources.length === 0) return [];
@@ -64,21 +69,34 @@ export function deduplicateSources(sources: PlaySource[]): PlaySource[] {
   const result: PlaySource[] = [];
   const globalSeenUrls = new Set<string>();
 
-  // 3. 对各站点的多条线路进行清洗与择优筛选
+  // 3. 对各资源站严格筛选【唯一最佳线路】（同一个资源站严格只保留 1 条）
   siteGroupMap.forEach((group, siteName) => {
     // 找出该资源站的最大集数
     const maxEpisodes = Math.max(...group.map((g) => g.episodes.length));
 
     // 如果该剧集有多个集数（如微短剧或电视剧，集数 > 3），则剔除只有 1 集的残缺源或解说/预告片
-    const candidates = group.filter((g) => {
+    let candidates = group.filter((g) => {
       if (maxEpisodes > 3 && g.episodes.length <= 1) {
         return false;
       }
       return true;
     });
 
-    // 排序优先级：集数最多 > 原生 m3u8/mp4 > ID稳定
-    candidates.sort((a, b) => {
+    if (candidates.length === 0) {
+      candidates = group;
+    }
+
+    // 优先 m3u8 规则：如果该资源站有包含 m3u8/mp4 的线路，彻底过滤掉纯网页/云播放器/iframe
+    const m3u8Candidates = candidates.filter((g) => {
+      const url = g.episodes[0]?.url || "";
+      return url.includes(".m3u8") || url.includes(".mp4");
+    });
+
+    // 如果存在 m3u8 候选线路，则只在 m3u8 线路中挑选，彻底剔除云播放器
+    const pool = m3u8Candidates.length > 0 ? m3u8Candidates : candidates;
+
+    // 排序优先级：集数最多 > 有效直链 > ID稳定
+    pool.sort((a, b) => {
       if (b.episodes.length !== a.episodes.length) {
         return b.episodes.length - a.episodes.length;
       }
@@ -91,40 +109,22 @@ export function deduplicateSources(sources: PlaySource[]): PlaySource[] {
       return 0;
     });
 
-    const retainedForSite: PlaySource[] = [];
-    const siteSeenUrls = new Set<string>();
-
-    for (const item of candidates) {
+    // 每个站点严格只保留 1 条最佳线路
+    for (const item of pool) {
       const firstEpUrl = normalizeUrlForCompare(item.episodes[0]?.url);
 
-      // 如果当前资源站已经存在该 URL，或者全局已经有完全一致的播放流，跳过
-      if (siteSeenUrls.has(firstEpUrl) || globalSeenUrls.has(firstEpUrl)) {
+      // 全局切片地址去重（若其他先入站点的切片地址完全一样，跳过镜像源）
+      if (globalSeenUrls.has(firstEpUrl)) {
         continue;
       }
 
-      siteSeenUrls.add(firstEpUrl);
       globalSeenUrls.add(firstEpUrl);
-      retainedForSite.push(item);
-
-      // 单个站点最多保留 2 条不重复的高质线路，避免刷屏
-      if (retainedForSite.length >= 2) break;
-    }
-
-    // 若去重后无候选（极端情况），兜底保留排序第一的源
-    if (retainedForSite.length === 0 && candidates[0]) {
-      retainedForSite.push(candidates[0]);
-    }
-
-    // 格式化命名：如果该站只有 1 条则直接叫站点名；若有 2 条则标为 "1线"、"2线"
-    retainedForSite.forEach((item, idx) => {
-      const formattedName =
-        retainedForSite.length > 1 ? `${siteName} ${idx + 1}线` : siteName;
-
       result.push({
         ...item,
-        name: formattedName,
+        name: siteName, // 纯净站点名，不加 1线 / 2线
       });
-    });
+      break; // 同一个资源站严格只保留 1 条！
+    }
   });
 
   return result;

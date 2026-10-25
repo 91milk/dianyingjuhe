@@ -98,7 +98,7 @@ async function CategoryContent({ searchParamsPromise }: { searchParamsPromise: P
   if (initialQuery) {
     initialMovies = await movieService.searchMovies(initialQuery);
   } else if (initialCategory) {
-    initialMovies = await movieService.getByCategory(initialCategory, 24);
+    initialMovies = await movieService.getByCategory(initialCategory, 36);
   } else {
     initialMovies = await movieService.filterMovies({});
   }

@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
+import { cookies } from "next/headers";
 import { siteConfig } from "@/config/site";
 import { AppShell } from "@/components/AppShell";
+import { TEMPLATE_COOKIE_NAME, SiteTemplate } from "@/context/TemplateContext";
 import "./globals.css";
 
 const siteUrl = siteConfig.url.startsWith("http")
@@ -65,11 +67,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
+  const initialTemplate = (cookieStore.get(TEMPLATE_COOKIE_NAME)?.value as SiteTemplate) || "classic";
+
   // 生成标准搜索引擎站点与搜索入口微数据 (Schema.org JSON-LD)
   const jsonLd = {
     "@context": "https://schema.org",
@@ -89,19 +94,21 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="zh-CN" className="dark" suppressHydrationWarning>
+    <html
+      lang="zh-CN"
+      className="dark"
+      data-template={initialTemplate}
+      suppressHydrationWarning
+    >
       <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body
-        className="bg-[#0d0d0f] text-zinc-100 antialiased selection:bg-[#ffcf32] selection:text-black"
-        suppressHydrationWarning
-      >
+      <body className="antialiased" suppressHydrationWarning>
         <Suspense fallback={null}>
-          <AppShell>{children}</AppShell>
+          <AppShell initialTemplate={initialTemplate}>{children}</AppShell>
         </Suspense>
       </body>
     </html>

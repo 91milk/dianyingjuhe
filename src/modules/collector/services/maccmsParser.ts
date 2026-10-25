@@ -14,8 +14,8 @@ export class MacCmsParser {
     typeId1?: number | string,
     vodClass?: string
   ): MovieCategory {
-    // 0. 若父级分类明确为短剧 (MacCMS 标准父分类 ID 30)
-    if (Number(typeId1) === 30) {
+    // 0. 若父级分类明确为短剧 (MacCMS 标准父分类 ID 30 或 38)
+    if (Number(typeId1) === 30 || Number(typeId1) === 38) {
       return "shortplay";
     }
 
@@ -25,6 +25,7 @@ export class MacCmsParser {
     if (
       t.includes("短剧") ||
       t.includes("爽剧") ||
+      t.includes("爽文") ||
       t.includes("现代都市") ||
       t.includes("古装仙侠") ||
       t.includes("穿越年代") ||
@@ -107,7 +108,7 @@ export class MacCmsParser {
     const fromList = fromStr.split("$$$");
     const urlList = urlStr.split("$$$");
 
-    const sources: PlaySource[] = [];
+    const rawParsedTabs: { fromName: string; episodes: Episode[]; isM3u8: boolean }[] = [];
 
     fromList.forEach((fromName, idx) => {
       const episodesChunk = urlList[idx] || "";
@@ -130,14 +131,30 @@ export class MacCmsParser {
         .filter((ep) => ep.url.length > 0);
 
       if (episodes.length > 0) {
-        const cleanName = cleanSiteName(siteName);
-        sources.push({
-          id: `src-${siteId}-${item.vod_id}-${fromName}-${idx}`,
-          name: cleanName,
+        const isM3u8 =
+          fromName.toLowerCase().includes("m3u8") ||
+          episodes.some((e) => e.url.includes(".m3u8") || e.url.includes(".mp4"));
+
+        rawParsedTabs.push({
+          fromName,
           episodes,
+          isM3u8,
         });
       }
     });
+
+    if (rawParsedTabs.length === 0) return [];
+
+    // 优先只保留 m3u8 直链；若该站完全没有 m3u8，才保留云播，彻底避免同站 2 种资源冗余
+    const hasM3u8 = rawParsedTabs.some((tab) => tab.isM3u8);
+    const validTabs = hasM3u8 ? rawParsedTabs.filter((tab) => tab.isM3u8) : rawParsedTabs;
+
+    const cleanName = cleanSiteName(siteName);
+    const sources: PlaySource[] = validTabs.map((tab, idx) => ({
+      id: `src-${siteId}-${item.vod_id}-${tab.fromName}-${idx}`,
+      name: cleanName,
+      episodes: tab.episodes,
+    }));
 
     return deduplicateSources(sources);
   }
@@ -167,6 +184,22 @@ export class MacCmsParser {
         if (c && !genres.includes(c)) genres.push(c);
       });
     }
+
+    // 短剧针对性题材标签拓展，确保多维筛选能精准命中
+    if (category === "shortplay") {
+      const name = item.vod_name || "";
+      if (!genres.includes("短剧")) genres.push("短剧");
+      if ((name.includes("战神") || name.includes("龙王") || name.includes("无敌")) && !genres.includes("战神")) genres.push("战神");
+      if ((name.includes("逆袭") || name.includes("打脸") || name.includes("赘婿") || name.includes("神豪")) && !genres.includes("逆袭")) genres.push("逆袭");
+      if ((name.includes("总裁") || name.includes("甜宠") || name.includes("娇妻") || name.includes("夫人") || name.includes("闪婚") || name.includes("前妻")) && !genres.includes("甜宠")) {
+        genres.push("甜宠");
+        if (!genres.includes("爱情")) genres.push("爱情");
+      }
+      if ((name.includes("仙") || name.includes("道") || name.includes("古装") || name.includes("重生") || name.includes("穿越") || name.includes("修仙")) && !genres.includes("奇幻")) genres.push("奇幻");
+      if ((name.includes("案") || name.includes("谜") || name.includes("谋") || name.includes("罪") || name.includes("劫") || name.includes("心声")) && !genres.includes("悬疑")) genres.push("悬疑");
+      if (!genres.includes("剧情")) genres.push("剧情");
+    }
+
     if (genres.length === 0) genres.push("剧情");
 
     return {

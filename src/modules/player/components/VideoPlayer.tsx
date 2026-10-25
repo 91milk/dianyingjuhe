@@ -13,6 +13,7 @@ interface VideoPlayerProps {
   onTimeUpdate?: (currentTime: number, duration: number) => void;
   onEnded?: () => void;
   onOrientationDetected?: (isLandscape: boolean, width: number, height: number) => void;
+  onPlaybackError?: (errorMessage?: string) => void;
   initialTime?: number;
   enableDanmaku?: boolean;
   aspectRatio?: "16/9" | "9/16" | "custom";
@@ -27,6 +28,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onTimeUpdate,
   onEnded,
   onOrientationDetected,
+  onPlaybackError,
   initialTime = 0,
   enableDanmaku = true,
   aspectRatio = "16/9",
@@ -144,7 +146,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 if (data.fatal) {
                   switch (data.type) {
                     case Hls.ErrorTypes.NETWORK_ERROR:
-                      hls.startLoad();
+                      if (!isDestroyed) {
+                        setPlayError("当前流网络加载异常，正在尝试备用线路...");
+                        onPlaybackError?.("网络连接中断或源失效");
+                      }
+                      hls.destroy();
                       break;
                     case Hls.ErrorTypes.MEDIA_ERROR:
                       hls.recoverMediaError();
@@ -152,6 +158,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                     default:
                       if (!isDestroyed) {
                         setPlayError("当前流解码异常，建议切换其他可用线路");
+                        onPlaybackError?.("流解码错误");
                       }
                       hls.destroy();
                       break;
@@ -215,7 +222,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
       art.on("error", () => {
         if (!isDestroyed) {
-          setPlayError("播放异常，可尝试切换线路或网页兼容模式");
+          setPlayError("播放异常，正在为您尝试备用线路...");
+          onPlaybackError?.("播放器加载失败");
         }
       });
 

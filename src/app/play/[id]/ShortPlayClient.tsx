@@ -172,6 +172,19 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
     setIsManualOverride(false); // 切换新剧集时重新允许自动识别
   };
 
+  // 播放异常自动秒级故障转移切源
+  const handlePlaybackFailure = React.useCallback(() => {
+    if (!sources || sources.length <= 1) return;
+    const currentIndex = sources.findIndex((s) => s.id === activeSource?.id);
+    if (currentIndex !== -1 && currentIndex + 1 < sources.length) {
+      const nextSource = sources[currentIndex + 1];
+      setActiveSource(nextSource);
+      const matched = nextSource.episodes.find((e) => e.name === activeEpisode?.name) || nextSource.episodes[0];
+      setActiveEpisode(matched);
+      setResolveMessage(`当前线路加载失败，已为您自动切换至备用线路【${nextSource.name}】`);
+    }
+  }, [activeEpisode?.name, activeSource?.id, sources]);
+
   const handleTimeUpdate = (currentTime: number, duration: number) => {
     if (!activeSource || !activeEpisode) return;
     historyService.saveProgress({
@@ -282,6 +295,7 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
                 onOrientationDetected={handleOrientationDetected}
                 className="w-full h-full"
                 onTimeUpdate={handleTimeUpdate}
+                onPlaybackError={handlePlaybackFailure}
               >
                 {/* 播放器左上角：画幅横屏/竖屏快速切换按钮 */}
                 <div className="absolute top-3 left-3 z-50 select-none">

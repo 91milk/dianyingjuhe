@@ -164,6 +164,19 @@ export const WatchClient: React.FC<WatchClientProps> = ({
     setActiveEpisode(ep);
   };
 
+  // 播放异常自动秒级故障转移切源
+  const handlePlaybackFailure = React.useCallback(() => {
+    if (!sources || sources.length <= 1) return;
+    const currentIndex = sources.findIndex((s) => s.id === activeSource?.id);
+    if (currentIndex !== -1 && currentIndex + 1 < sources.length) {
+      const nextSource = sources[currentIndex + 1];
+      setActiveSource(nextSource);
+      const matched = nextSource.episodes.find((e) => e.name === activeEpisode?.name) || nextSource.episodes[0];
+      setActiveEpisode(matched);
+      setResolveMessage(`当前线路加载失败，已为您自动平滑切换至【${nextSource.name}】`);
+    }
+  }, [activeEpisode?.name, activeSource?.id, sources]);
+
   const handleTimeUpdate = (currentTime: number, duration: number) => {
     if (!activeSource || !activeEpisode) return;
     historyService.saveProgress({
@@ -230,6 +243,7 @@ export const WatchClient: React.FC<WatchClientProps> = ({
                 poster={movie.banner || movie.poster}
                 initialTime={initialTime}
                 onTimeUpdate={handleTimeUpdate}
+                onPlaybackError={handlePlaybackFailure}
               >
                 {/* 核心亮点：播放器右上角悬浮线路选择器，点击放大选择，选择后自动缩小 */}
                 {sources.length > 0 && activeSource && (

@@ -56,7 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // 2. 动态聚合高热度影片详情与播放落地页
+  // 2. 动态聚合高热度影片介绍页；播放页不参与索引
   try {
     const [featured, topDouban, hotTvs, shortPlays, liveUpdates] = await Promise.all([
       movieService.getFeaturedMovies(),
@@ -86,7 +86,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       (movie) => {
         const encodedId = encodePlayId(movie.id);
         return {
-          url: `${baseUrl}/play/${encodedId}`,
+          url: `${baseUrl}/movie/${encodedId}`,
           lastModified: now,
           changeFrequency: "weekly",
           priority: 0.7,

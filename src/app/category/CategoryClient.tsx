@@ -13,14 +13,14 @@ interface CategoryClientProps {
 }
 
 const ALL_SITES = [
+  "极速资源",
+  "魔都资源",
+  "iKun资源",
+  "百度云资源",
+  "非凡资源",
+  "量子资源",
   "全网资源",
   "茅台资源",
-  "如意资源",
-  "暴风资源",
-  "非凡资源",
-  "魔都资源",
-  "红牛资源",
-  "量子资源",
 ];
 
 export const CategoryClient: React.FC<CategoryClientProps> = ({
@@ -37,6 +37,7 @@ export const CategoryClient: React.FC<CategoryClientProps> = ({
   });
   const [movies, setMovies] = useState<MovieItem[]>(initialMovies);
   const [query, setQuery] = useState(initialQuery || "");
+  const [displayLimit, setDisplayLimit] = useState(36);
 
   // 搜索进度条与状态反馈
   const [isSearching, setIsSearching] = useState(false);
@@ -46,10 +47,10 @@ export const CategoryClient: React.FC<CategoryClientProps> = ({
   const isFirstMount = React.useRef(true);
 
   useEffect(() => {
-    // 首次载入若已有服务端预取的 initialMovies，跳过重复的网络请求，实现页面秒开
+    // 首次载入若已有服务端预取充足的 initialMovies，跳过重复的网络请求，实现页面秒开
     if (isFirstMount.current) {
       isFirstMount.current = false;
-      if (initialMovies && initialMovies.length > 0) {
+      if (initialMovies && initialMovies.length >= 12) {
         return;
       }
     }
@@ -58,6 +59,7 @@ export const CategoryClient: React.FC<CategoryClientProps> = ({
 
     async function applyFilters() {
       setIsSearching(true);
+      setDisplayLimit(36);
       setSearchProgress(15);
       setSearchStatus("正在为您检索全网超清影视库...");
 
@@ -238,14 +240,26 @@ export const CategoryClient: React.FC<CategoryClientProps> = ({
           </button>
         </div>
       ) : (
-        <MovieGrid
-          movies={movies}
-          subtitle={
-            isSearching
-              ? "正在全网并发检索最新片源..."
-              : `共找到 ${movies.length} 部匹配作品`
-          }
-        />
+        <>
+          <MovieGrid
+            movies={movies.slice(0, displayLimit)}
+            subtitle={
+              isSearching
+                ? "正在全网并发检索最新片源..."
+                : `共找到 ${movies.length} 部匹配作品`
+            }
+          />
+          {movies.length > displayLimit && (
+            <div className="flex justify-center pt-2 pb-8">
+              <button
+                onClick={() => setDisplayLimit((prev) => prev + 36)}
+                className="px-6 py-2.5 rounded-xl bg-zinc-800/80 hover:bg-[#ffcf32] hover:text-black border border-zinc-700/60 hover:border-amber-400 font-bold text-xs text-zinc-300 transition-all duration-200 cursor-pointer shadow-md flex items-center gap-2"
+              >
+                加载更多作品 (已显示 {Math.min(displayLimit, movies.length)} / {movies.length})
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

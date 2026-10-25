@@ -12,58 +12,16 @@ const CACHE_FILE_PATH = path.join(process.cwd(), "data", "cms-cache.json");
 
 const DEFAULT_SITES: ResourceSite[] = [
   {
-    id: "jinying",
-    name: "全网资源",
-    apiUrl: "https://jyzyapi.com/provide/vod/from/jinyingyun/at/json",
+    id: "jisu",
+    name: "极速资源",
+    apiUrl: "https://jszyapi.com/api.php/provide/vod/from/jsm3u8/at/json",
     type: "maccms_v10",
-    playFrom: "jinyingyun",
+    playFrom: "jsm3u8",
     isEnabled: true,
-    weight: 98,
+    weight: 99,
     status: "online",
-    responseTime: 220,
-    totalItems: 260000,
-    lastCheckedAt: Date.now(),
-    createdAt: Date.now(),
-  },
-  {
-    id: "ruyi",
-    name: "如意资源",
-    apiUrl: "https://cj.rycjapi.com/api.php/provide/vod/from/ruyi/at/json/",
-    type: "maccms_v10",
-    playFrom: "ruyi",
-    isEnabled: true,
-    weight: 96,
-    status: "online",
-    responseTime: 240,
-    totalItems: 190000,
-    lastCheckedAt: Date.now(),
-    createdAt: Date.now(),
-  },
-  {
-    id: "feifan",
-    name: "非凡资源",
-    apiUrl: "http://cj.ffzyapi.com/api.php/provide/vod/from/ffm3u8/at/json/",
-    type: "maccms_v10",
-    playFrom: "ffm3u8",
-    isEnabled: true,
-    weight: 95,
-    status: "online",
-    responseTime: 250,
-    totalItems: 320000,
-    lastCheckedAt: Date.now(),
-    createdAt: Date.now(),
-  },
-  {
-    id: "baofeng",
-    name: "暴风资源",
-    apiUrl: "https://bfzyapi.com/api.php/provide/vod/from/bfm3u8/at/json/",
-    type: "maccms_v10",
-    playFrom: "bfm3u8",
-    isEnabled: true,
-    weight: 92,
-    status: "online",
-    responseTime: 260,
-    totalItems: 240000,
+    responseTime: 180,
+    totalItems: 350000,
     lastCheckedAt: Date.now(),
     createdAt: Date.now(),
   },
@@ -74,38 +32,52 @@ const DEFAULT_SITES: ResourceSite[] = [
     type: "maccms_v10",
     playFrom: "modum3u8",
     isEnabled: true,
-    weight: 90,
+    weight: 98,
     status: "online",
-    responseTime: 270,
+    responseTime: 200,
     totalItems: 180000,
     lastCheckedAt: Date.now(),
     createdAt: Date.now(),
   },
   {
-    id: "hongniu",
-    name: "红牛资源",
-    apiUrl: "https://www.hongniuzy2.com/api.php/provide/vod/from/hnm3u8/at/json/",
+    id: "ikun",
+    name: "iKun资源",
+    apiUrl: "https://ikunzyapi.com/api.php/provide/vod/from/ikm3u8/at/json",
     type: "maccms_v10",
-    playFrom: "hnm3u8",
+    playFrom: "ikm3u8",
+    isEnabled: true,
+    weight: 96,
+    status: "online",
+    responseTime: 220,
+    totalItems: 280000,
+    lastCheckedAt: Date.now(),
+    createdAt: Date.now(),
+  },
+  {
+    id: "baiduyun",
+    name: "百度云资源",
+    apiUrl: "https://api.apibdzy.com/api.php/provide/vod/from/dbm3u8/at/json",
+    type: "maccms_v10",
+    playFrom: "dbm3u8",
+    isEnabled: true,
+    weight: 94,
+    status: "online",
+    responseTime: 240,
+    totalItems: 220000,
+    lastCheckedAt: Date.now(),
+    createdAt: Date.now(),
+  },
+  {
+    id: "feifan",
+    name: "非凡资源",
+    apiUrl: "http://cj.ffzyapi.com/api.php/provide/vod/from/ffm3u8/at/json/",
+    type: "maccms_v10",
+    playFrom: "ffm3u8",
     isEnabled: true,
     weight: 88,
     status: "online",
-    responseTime: 280,
-    totalItems: 180000,
-    lastCheckedAt: Date.now(),
-    createdAt: Date.now(),
-  },
-  {
-    id: "liangzi",
-    name: "量子资源",
-    apiUrl: "https://cj.lziapi.com/api.php/provide/vod/from/lzm3u8/at/json/",
-    type: "maccms_v10",
-    playFrom: "lzm3u8",
-    isEnabled: true,
-    weight: 85,
-    status: "online",
-    responseTime: 320,
-    totalItems: 210000,
+    responseTime: 250,
+    totalItems: 320000,
     lastCheckedAt: Date.now(),
     createdAt: Date.now(),
   },
@@ -116,10 +88,24 @@ const DEFAULT_SITES: ResourceSite[] = [
     type: "maccms_v10",
     playFrom: "mtm3u8",
     isEnabled: true,
-    weight: 80,
+    weight: 82,
     status: "online",
-    responseTime: 380,
-    totalItems: 150777,
+    responseTime: 300,
+    totalItems: 150000,
+    lastCheckedAt: Date.now(),
+    createdAt: Date.now(),
+  },
+  {
+    id: "liangzi",
+    name: "量子资源",
+    apiUrl: "https://cj.lziapi.com/api.php/provide/vod/from/lzm3u8/at/json/",
+    type: "maccms_v10",
+    playFrom: "lzm3u8",
+    isEnabled: true,
+    weight: 75,
+    status: "online",
+    responseTime: 320,
+    totalItems: 210000,
     lastCheckedAt: Date.now(),
     createdAt: Date.now(),
   },
@@ -523,8 +509,8 @@ export class ResourceSiteService {
         })()
       );
 
-      // 全网源等主站多拉取第 2 页，扩充丰富度
-      if (site.id === "jinying" || site.id === "maotai") {
+      // 针对极速、魔都等主力资源站并发拉取第 2 页与专属分类，扩充全网片源丰富度
+      if (site.id === "jisu" || site.id === "modu") {
         fetchTasks.push(
           (async () => {
             const controller = new AbortController();
@@ -548,122 +534,64 @@ export class ResourceSiteService {
           })()
         );
 
-        // 核心加固：额外并发拉取电影专区 (动作片、科幻片、爱情片、喜剧片，彻底解决电影板块内容少的问题)
-        fetchTasks.push(
-          (async () => {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 4500);
-            try {
-              const sep = site.apiUrl.includes("?") ? "&" : "?";
-              const url = `${site.apiUrl}${sep}ac=videolist&t=2&pg=1`;
-              const res = await fetch(url, {
-                signal: controller.signal,
-                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
-              });
-              clearTimeout(timer);
-              if (!res.ok) return [];
-              const data: MacCmsResponse = await res.json();
-              if (!data.list || !Array.isArray(data.list)) return [];
-              return data.list.map((item) => MacCmsParser.toMovieItem(item, site));
-            } catch {
-              clearTimeout(timer);
-              return [];
-            }
-          })()
-        );
-
-        fetchTasks.push(
-          (async () => {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 4500);
-            try {
-              const sep = site.apiUrl.includes("?") ? "&" : "?";
-              const url = `${site.apiUrl}${sep}ac=videolist&t=9&pg=1`; // 动作片专区
-              const res = await fetch(url, {
-                signal: controller.signal,
-                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
-              });
-              clearTimeout(timer);
-              if (!res.ok) return [];
-              const data: MacCmsResponse = await res.json();
-              if (!data.list || !Array.isArray(data.list)) return [];
-              return data.list.map((item) => MacCmsParser.toMovieItem(item, site));
-            } catch {
-              clearTimeout(timer);
-              return [];
-            }
-          })()
-        );
-
-        fetchTasks.push(
-          (async () => {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 4500);
-            try {
-              const sep = site.apiUrl.includes("?") ? "&" : "?";
-              const url = `${site.apiUrl}${sep}ac=videolist&t=12&pg=1`; // 科幻片专区
-              const res = await fetch(url, {
-                signal: controller.signal,
-                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
-              });
-              clearTimeout(timer);
-              if (!res.ok) return [];
-              const data: MacCmsResponse = await res.json();
-              if (!data.list || !Array.isArray(data.list)) return [];
-              return data.list.map((item) => MacCmsParser.toMovieItem(item, site));
-            } catch {
-              clearTimeout(timer);
-              return [];
-            }
-          })()
-        );
-
-        // 额外并发拉取热门短剧专区 (现代都市短剧、反转爽剧，确保短剧分类数据实时充沛)
-        fetchTasks.push(
-          (async () => {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 4500);
-            try {
-              const sep = site.apiUrl.includes("?") ? "&" : "?";
-              const url = `${site.apiUrl}${sep}ac=videolist&t=41&pg=1`;
-              const res = await fetch(url, {
-                signal: controller.signal,
-                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
-              });
-              clearTimeout(timer);
-              if (!res.ok) return [];
-              const data: MacCmsResponse = await res.json();
-              if (!data.list || !Array.isArray(data.list)) return [];
-              return data.list.map((item) => MacCmsParser.toMovieItem(item, site));
-            } catch {
-              clearTimeout(timer);
-              return [];
-            }
-          })()
-        );
-
-        fetchTasks.push(
-          (async () => {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 4500);
-            try {
-              const sep = site.apiUrl.includes("?") ? "&" : "?";
-              const url = `${site.apiUrl}${sep}ac=videolist&t=45&pg=1`;
-              const res = await fetch(url, {
-                signal: controller.signal,
-                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
-              });
-              clearTimeout(timer);
-              if (!res.ok) return [];
-              const data: MacCmsResponse = await res.json();
-              if (!data.list || !Array.isArray(data.list)) return [];
-              return data.list.map((item) => MacCmsParser.toMovieItem(item, site));
-            } catch {
-              clearTimeout(timer);
-              return [];
-            }
-          })()
-        );
+        // 核心加固：拉取电影专区与微短剧专区
+        if (site.id === "jisu") {
+          // 极速资源: 电影(t=2), 动作片(t=9), 现代都市短剧(t=46), 反转爽剧短剧(t=50)
+          const jisuTypes = [2, 9, 46, 50];
+          for (const tid of jisuTypes) {
+            fetchTasks.push(
+              (async () => {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 4500);
+                try {
+                  const sep = site.apiUrl.includes("?") ? "&" : "?";
+                  const url = `${site.apiUrl}${sep}ac=videolist&t=${tid}&pg=1`;
+                  const res = await fetch(url, {
+                    signal: controller.signal,
+                    headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+                  });
+                  clearTimeout(timer);
+                  if (!res.ok) return [];
+                  const data: MacCmsResponse = await res.json();
+                  if (!data.list || !Array.isArray(data.list)) return [];
+                  return data.list.map((item) => MacCmsParser.toMovieItem(item, site));
+                } catch {
+                  clearTimeout(timer);
+                  return [];
+                }
+              })()
+            );
+          }
+        } else if (site.id === "modu") {
+          // 魔都资源: 电影(t=7), 短剧专区(t=38 第1页与第2页)
+          const moduTasks = [
+            `${site.apiUrl}${site.apiUrl.includes("?") ? "&" : "?"}ac=videolist&t=7&pg=1`,
+            `${site.apiUrl}${site.apiUrl.includes("?") ? "&" : "?"}ac=videolist&t=38&pg=1`,
+            `${site.apiUrl}${site.apiUrl.includes("?") ? "&" : "?"}ac=videolist&t=38&pg=2`,
+          ];
+          for (const targetUrl of moduTasks) {
+            fetchTasks.push(
+              (async () => {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 4500);
+                try {
+                  const res = await fetch(targetUrl, {
+                    signal: controller.signal,
+                    headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+                  });
+                  clearTimeout(timer);
+                  if (!res.ok) return [];
+                  const data: MacCmsResponse = await res.json();
+                  if (!data.list || !Array.isArray(data.list)) return [];
+                  return data.list.map((item) => MacCmsParser.toMovieItem(item, site));
+                } catch {
+                  clearTimeout(timer);
+                  return [];
+                }
+              })()
+            );
+          }
+        }
       }
     });
 
@@ -751,8 +679,8 @@ export class ResourceSiteService {
   private async executeFetchCategory(typeId: number, limit = 24): Promise<MovieItem[]> {
     const enabledSites = this.getSites().filter((s) => s.isEnabled);
     const targetSite =
-      enabledSites.find((s) => s.id === "jinying") ||
-      enabledSites.find((s) => s.id === "maotai") ||
+      enabledSites.find((s) => s.id === "jisu") ||
+      enabledSites.find((s) => s.id === "modu") ||
       enabledSites[0];
 
     if (!targetSite) return [];
@@ -799,24 +727,15 @@ export class ResourceSiteService {
   }
 
   /**
-   * 独立快速穿透抓取真实微短剧列表 (支持 SWR 秒开)
+   * 独立快速穿透抓取真实微短剧列表 (支持多源聚合与 SWR 秒开)
    */
-  async fetchLiveShortPlays(limit = 24): Promise<MovieItem[]> {
-    if (this.shortPlaysCache) {
-      if (performance.now() - this.shortPlaysCache.timestamp < 1000 * 60 * 10) {
+  async fetchLiveShortPlays(limit = 36): Promise<MovieItem[]> {
+    if (this.shortPlaysCache && this.shortPlaysCache.items.length >= 24) {
+      if (performance.now() - this.shortPlaysCache.timestamp < 1000 * 60 * 15) {
         return this.shortPlaysCache.items.slice(0, limit);
       }
       this.refreshShortPlaysInBackground(limit);
       return this.shortPlaysCache.items.slice(0, limit);
-    }
-
-    // 优先从现有片库中抽取 shortplay
-    const pool = this.livePoolCache?.items || [];
-    const poolShorts = pool.filter((m) => m.category === "shortplay");
-    if (poolShorts.length >= 6) {
-      this.shortPlaysCache = { timestamp: performance.now(), items: poolShorts };
-      this.refreshShortPlaysInBackground(limit);
-      return poolShorts.slice(0, limit);
     }
 
     return this.executeFetchShortPlays(limit);
@@ -832,38 +751,65 @@ export class ResourceSiteService {
       });
   }
 
-  private async executeFetchShortPlays(limit = 24): Promise<MovieItem[]> {
+  private async executeFetchShortPlays(limit = 36): Promise<MovieItem[]> {
     const enabledSites = this.getSites().filter((s) => s.isEnabled);
-    const targetSite =
-      enabledSites.find((s) => s.id === "jinying") ||
-      enabledSites.find((s) => s.id === "maotai") ||
-      enabledSites[0];
+    const jisuSite = enabledSites.find((s) => s.id === "jisu");
+    const moduSite = enabledSites.find((s) => s.id === "modu");
+    const ikunSite = enabledSites.find((s) => s.id === "ikun");
+    const feifanSite = enabledSites.find((s) => s.id === "feifan");
 
-    if (!targetSite) return [];
+    const requests: { site: ResourceSite; typeId: number; page: number }[] = [];
 
-    const shortTypes = [41, 45, 40]; // 现代都市、反转爽剧、古装仙侠
-    const tasks = shortTypes.map((tid) =>
-      (async () => {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 4500);
-        try {
-          const sep = targetSite.apiUrl.includes("?") ? "&" : "?";
-          const url = `${targetSite.apiUrl}${sep}ac=videolist&t=${tid}&pg=1`;
-          const res = await fetch(url, {
-            signal: controller.signal,
-            headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
-          });
-          clearTimeout(timer);
-          if (!res.ok) return [];
-          const data: MacCmsResponse = await res.json();
-          if (!data.list || !Array.isArray(data.list)) return [];
-          return data.list.map((item) => MacCmsParser.toMovieItem(item, targetSite));
-        } catch {
-          clearTimeout(timer);
-          return [];
-        }
-      })()
-    );
+    // 魔都短剧专区 (35,000+ 部短剧，第 1 页与第 2 页并发)
+    if (moduSite) {
+      requests.push({ site: moduSite, typeId: 38, page: 1 });
+      requests.push({ site: moduSite, typeId: 38, page: 2 });
+    }
+
+    // 极速短剧细分大类 (现代都市、反转爽剧、言情总裁、古装仙侠、穿越年代)
+    if (jisuSite) {
+      requests.push({ site: jisuSite, typeId: 46, page: 1 }); // 现代都市 (15,000+ 部)
+      requests.push({ site: jisuSite, typeId: 50, page: 1 }); // 反转爽剧 (4,700+ 部)
+      requests.push({ site: jisuSite, typeId: 48, page: 1 }); // 言情总裁
+      requests.push({ site: jisuSite, typeId: 45, page: 1 }); // 古装仙侠
+      requests.push({ site: jisuSite, typeId: 47, page: 1 }); // 穿越年代
+    }
+
+    // iKun 爽文短剧专区
+    if (ikunSite) {
+      requests.push({ site: ikunSite, typeId: 45, page: 1 });
+    }
+
+    // 非凡短剧专区
+    if (feifanSite) {
+      requests.push({ site: feifanSite, typeId: 36, page: 1 });
+    }
+
+    if (requests.length === 0 && enabledSites.length > 0) {
+      requests.push({ site: enabledSites[0], typeId: 38, page: 1 });
+      requests.push({ site: enabledSites[0], typeId: 46, page: 1 });
+    }
+
+    const tasks = requests.map(async ({ site, typeId, page }) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4500);
+      try {
+        const sep = site.apiUrl.includes("?") ? "&" : "?";
+        const url = `${site.apiUrl}${sep}ac=videolist&t=${typeId}&pg=${page}`;
+        const res = await fetch(url, {
+          signal: controller.signal,
+          headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+        });
+        clearTimeout(timer);
+        if (!res.ok) return [];
+        const data: MacCmsResponse = await res.json();
+        if (!data.list || !Array.isArray(data.list)) return [];
+        return data.list.map((item) => MacCmsParser.toMovieItem(item, site));
+      } catch {
+        clearTimeout(timer);
+        return [];
+      }
+    });
 
     const settled = await Promise.allSettled(tasks);
     const allItems: MovieItem[] = [];
@@ -875,11 +821,37 @@ export class ResourceSiteService {
 
     const map = new Map<string, MovieItem>();
     allItems.forEach((m) => {
-      if (!map.has(m.title)) map.set(m.title, m);
+      const title = m.title?.trim();
+      if (!title) return;
+      if (!map.has(title)) {
+        map.set(title, m);
+      } else {
+        const exist = map.get(title)!;
+        exist.sources.push(...m.sources);
+      }
     });
 
-    const distinctShorts = Array.from(map.values());
-    this.shortPlaysCache = { timestamp: performance.now(), items: distinctShorts };
+    const distinctShorts = Array.from(map.values()).filter((item) => {
+      const text = (item.title + " " + item.genres.join(" ")).toLowerCase();
+      return (
+        !text.includes("伦理") &&
+        !text.includes("情色") &&
+        !text.includes("擦边") &&
+        !text.includes("福利")
+      );
+    });
+
+    if (distinctShorts.length > 0) {
+      this.shortPlaysCache = { timestamp: performance.now(), items: distinctShorts };
+
+      // 同步合并到本地实时池与磁盘缓存
+      if (this.livePoolCache) {
+        const poolMap = new Map<string, MovieItem>();
+        this.livePoolCache.items.forEach((item) => poolMap.set(item.title.trim().toLowerCase(), item));
+        distinctShorts.forEach((item) => poolMap.set(item.title.trim().toLowerCase(), item));
+        this.livePoolCache.items = Array.from(poolMap.values());
+      }
+    }
 
     return distinctShorts.slice(0, limit);
   }
@@ -910,7 +882,7 @@ export class ResourceSiteService {
     }
 
     // 若请求短剧但内存池较少，启动实时穿透拉取
-    if (categoryName === "shortplay" && filtered.length < 8) {
+    if (categoryName === "shortplay" && filtered.length < 24) {
       try {
         const liveShorts = await this.fetchLiveShortPlays(limit);
         if (liveShorts.length > 0) {

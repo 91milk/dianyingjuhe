@@ -67,20 +67,39 @@ export class MovieService {
   }
 
   /**
-   * 获取爆款微短剧爽剧精选
+   * 获取爆款微短剧爽剧精选 (优先拉取全网实时短剧库，融合豆瓣口碑高分短剧)
    */
-  async getHotShortPlays(limit = 6): Promise<MovieItem[]> {
-    return doubanService.getHotShortPlays(limit);
+  async getHotShortPlays(limit = 24): Promise<MovieItem[]> {
+    const doubanShorts = await doubanService.getHotShortPlays(limit);
+    try {
+      const liveShorts = await resourceSiteService.fetchLiveShortPlays(Math.max(limit * 2, 48));
+      const cleanLive = liveShorts.filter(isCleanMovieItem);
+      if (cleanLive.length > 0) {
+        // 优先将具有真实播放线路的短剧排在前面，并去重合并
+        const map = new Map<string, MovieItem>();
+        cleanLive.forEach((m) => map.set(m.title.trim().toLowerCase(), m));
+        doubanShorts.forEach((d) => {
+          const key = d.title.trim().toLowerCase();
+          if (!map.has(key)) {
+            map.set(key, d);
+          }
+        });
+        return Array.from(map.values()).slice(0, limit);
+      }
+    } catch {
+      // ignore
+    }
+    return doubanShorts;
   }
 
   /**
    * 按分类获取最新真实影片 (优先结合豆瓣口碑与采集站干净影视)
    */
-  async getByCategory(category: MovieCategory, limit = 12): Promise<MovieItem[]> {
+  async getByCategory(category: MovieCategory, limit = 24): Promise<MovieItem[]> {
+    if (category === "shortplay") return this.getHotShortPlays(limit);
     if (category === "tv") return this.getHotTvs(limit);
     if (category === "movie") return this.getHotMovies(limit);
     if (category === "anime") return this.getHotAnimes(limit);
-    if (category === "shortplay") return this.getHotShortPlays(limit);
 
     try {
       const liveItems = await resourceSiteService.getLatestFromSites(category, 1, limit * 2);
@@ -143,19 +162,31 @@ export class MovieService {
       // ignore
     }
 
-    // 若按短剧筛选且当前池中短剧较少，直接穿透加载最新全量短剧
+    // 若按短剧筛选，直接穿透加载最新全量短剧并合并（优先采用采集站真实有效播放线路）
     if (options.category === "shortplay") {
-      const shortCount = pool.filter((item) => item.category === "shortplay").length;
-      if (shortCount < 8) {
-        try {
-          const liveShorts = await resourceSiteService.fetchLiveShortPlays(36);
-          if (liveShorts.length > 0) {
-            const cleanShorts = liveShorts.filter(isCleanMovieItem);
-            pool = [...cleanShorts, ...pool];
-          }
-        } catch {
-          // ignore
+      try {
+        const liveShorts = await resourceSiteService.fetchLiveShortPlays(60);
+        if (liveShorts.length > 0) {
+          const cleanShorts = liveShorts.filter(isCleanMovieItem);
+          const titleMap = new Map<string, MovieItem>();
+          pool.forEach((item) => titleMap.set(item.title.trim().toLowerCase(), item));
+          cleanShorts.forEach((liveItem) => {
+            const key = liveItem.title.trim().toLowerCase();
+            if (titleMap.has(key)) {
+              const exist = titleMap.get(key)!;
+              if (!exist.sources || exist.sources.length === 0) {
+                titleMap.set(key, liveItem);
+              } else {
+                exist.sources.push(...liveItem.sources);
+              }
+            } else {
+              titleMap.set(key, liveItem);
+            }
+          });
+          pool = Array.from(titleMap.values());
         }
+      } catch {
+        // ignore
       }
     }
 

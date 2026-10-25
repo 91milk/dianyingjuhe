@@ -73,13 +73,17 @@ export async function generateMetadata({
     description,
     keywords,
     alternates: {
-      canonical: `/play/${id}`,
+      canonical: `/movie/${id}`,
+    },
+    robots: {
+      index: false,
+      follow: true,
     },
     openGraph: {
       type: "video.movie",
       title: `《${movie.title}》高清在线播放 - ${siteConfig.shortName}`,
       description,
-      url: `${siteConfig.url}/play/${id}`,
+      url: `${siteConfig.url}/movie/${id}`,
       images: [
         {
           url: posterUrl,
