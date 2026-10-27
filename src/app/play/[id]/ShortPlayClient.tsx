@@ -8,6 +8,7 @@ import { SourceSelector } from "@/modules/player/components/SourceSelector";
 import { EpisodeSelector } from "@/modules/player/components/EpisodeSelector";
 import { historyService } from "@/modules/user/services/historyService";
 import { MovieCard } from "@/modules/movie/components/MovieCard";
+import { DanmakuItem } from "@/modules/player/types";
 import {
   Sparkles,
   RefreshCw,
@@ -19,6 +20,7 @@ import {
   TrendingUp,
   Smartphone,
   Tv,
+  Send,
 } from "lucide-react";
 import { deduplicateSources } from "@/modules/movie/utils/sourceDeduplicator";
 
@@ -28,14 +30,6 @@ interface ShortPlayClientProps {
   initialSourceId?: string;
   initialEpisodeId?: string;
 }
-
-// 模拟实时短剧互动弹幕流与评论动态
-const SHORT_COMMENTS = [
-  { id: "1", user: "追剧狂魔小丸子", text: "这一集反转绝了！男主亮明战神身份的那一刻起了一身鸡皮疙瘩！", time: "刚刚", likes: 248 },
-  { id: "2", user: "短剧十级学者", text: "第15集有大伏笔，大家仔细看老管家的眼神！", time: "2分钟前", likes: 182 },
-  { id: "3", user: "熬夜冠军阿杰", text: "一口气直接看完了50集，完全停不下来，求作者快点更第二季！", time: "5分钟前", likes: 96 },
-  { id: "4", user: "逆袭本袭", text: "这反派演得太招人恨了，打脸那一瞬间真的太解气了！爽剧爽剧！", time: "8分钟前", likes: 64 },
-];
 
 export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
   movie,
@@ -51,6 +45,11 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
   const [activeEpisode, setActiveEpisode] = useState<Episode | null>(
     activeSource?.episodes?.find((e) => e.id === initialEpisodeId) || activeSource?.episodes?.[0] || null
   );
+
+  // 真实互动剧评与弹幕状态
+  const [comments, setComments] = useState<DanmakuItem[]>([]);
+  const [commentInput, setCommentInput] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   const [isResolving, setIsResolving] = useState<boolean>(true);
   const [resolveMessage, setResolveMessage] = useState<string>("正在并发探测全网短剧资源站...");
@@ -172,6 +171,103 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
     setIsManualOverride(false); // 切换新剧集时重新允许自动识别
   };
 
+  // 拉取当前剧集真实弹幕与剧评列表
+  useEffect(() => {
+    let isMounted = true;
+    async function loadEpisodeComments() {
+      try {
+        const epId = activeEpisode?.id || "ep-1";
+        const res = await fetch(
+          `/api/danmaku?movieId=${encodeURIComponent(movie.id)}&episodeId=${encodeURIComponent(epId)}`
+        );
+        const json = await res.json();
+        if (isMounted && json.success && Array.isArray(json.data)) {
+          setComments(json.data);
+        }
+      } catch (err) {
+        console.warn("Failed to load comments:", err);
+      }
+    }
+    loadEpisodeComments();
+    return () => {
+      isMounted = false;
+    };
+  }, [movie.id, activeEpisode?.id]);
+
+  // 格式化时间
+  const formatTimeAgo = (timestamp?: number) => {
+    if (!timestamp) return "刚刚";
+    const diff = Math.floor((Date.now() - timestamp) / 1000);
+    if (diff < 60) return "刚刚";
+    if (diff < 3600) return `${Math.floor(diff / 60)}分钟前`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}小时前`;
+    return `${Math.floor(diff / 86400)}天前`;
+  };
+
+  // 从右侧剧评栏发送弹幕/评论
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = commentInput.trim();
+    if (!text || isSubmittingComment) return;
+
+    setIsSubmittingComment(true);
+    const newComment: DanmakuItem = {
+      id: `local_${Date.now()}`,
+      movieId: movie.id,
+      episodeId: activeEpisode?.id || "ep-1",
+      text,
+      time: 0,
+      color: "#ffcf32",
+      type: "scroll",
+      user: "我",
+      createdAt: Date.now(),
+      likes: 0,
+    };
+    setComments((prev) => [newComment, ...prev]);
+    setCommentInput("");
+
+    try {
+      await fetch("/api/danmaku", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          movieId: movie.id,
+          episodeId: activeEpisode?.id || "ep-1",
+          text,
+          time: 0,
+          color: "#ffcf32",
+          type: "scroll",
+          user: "我",
+        }),
+      });
+    } catch {
+      // ignore
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  // 弹幕/评论点赞
+  const handleLikeComment = async (id: string) => {
+    setComments((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, likes: (c.likes || 0) + 1 } : c))
+    );
+    try {
+      await fetch("/api/danmaku/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+    } catch {
+      // ignore
+    }
+  };
+
+  // 视频播放器发送弹幕时的同步回调
+  const handlePlayerSendDanmaku = (danmaku: DanmakuItem) => {
+    setComments((prev) => [danmaku, ...prev]);
+  };
+
   // 播放异常自动秒级故障转移切源
   const handlePlaybackFailure = React.useCallback(() => {
     if (!sources || sources.length <= 1) return;
@@ -289,6 +385,8 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
                 key={`${activeSource?.id}-${activeEpisode.id}`}
                 url={activeEpisode.url}
                 poster={movie.banner || movie.poster}
+                movieId={movie.id}
+                episodeId={activeEpisode.id}
                 initialTime={initialTime}
                 enableDanmaku={true}
                 aspectRatio={aspectMode}
@@ -446,31 +544,88 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
             </div>
           )}
 
-          {/* 3. 右侧互动短评与弹幕精选 */}
-          <div className="p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800/80 space-y-3">
+          {/* 3. 右侧互动短评与弹幕精选 (真实持久化 + 即时发送互动) */}
+          <div className="p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800/80 space-y-3.5">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-2.5">
               <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
                 <MessageSquare className="w-3.5 h-3.5 text-[#ffcf32]" />
                 本集热门剧评与弹幕
+                <span className="text-[10px] font-normal px-1.5 py-0.2 rounded-full bg-amber-400/20 text-[#ffcf32]">
+                  {comments.length}
+                </span>
               </h3>
-              <span className="text-[10px] text-zinc-500">实时滚动</span>
+              <span className="text-[10px] text-zinc-500">双向同步</span>
             </div>
 
-            <div className="space-y-2.5 max-h-56 overflow-y-auto no-scrollbar scrollbar-none">
-              {SHORT_COMMENTS.map((c) => (
-                <div key={c.id} className="p-2.5 rounded-xl bg-black/40 border border-zinc-800/80 text-xs space-y-1">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-bold text-amber-300">{c.user}</span>
-                    <span className="text-zinc-500 text-[10px]">{c.time}</span>
-                  </div>
-                  <p className="text-zinc-300 text-[11px] leading-relaxed">{c.text}</p>
-                  <div className="flex items-center justify-end gap-1 text-[10px] text-zinc-500">
-                    <ThumbsUp className="w-2.5 h-2.5 text-zinc-400" />
-                    <span>{c.likes}</span>
-                  </div>
+            {/* 剧评列表 */}
+            <div className="space-y-2.5 max-h-60 overflow-y-auto no-scrollbar scrollbar-none pr-0.5">
+              {comments.length === 0 ? (
+                <div className="py-6 text-center text-xs text-zinc-500">
+                  暂无弹幕剧评，发一条抢占首发吧~
                 </div>
-              ))}
+              ) : (
+                comments.map((c) => {
+                  const timeFormatted =
+                    c.time && c.time > 0
+                      ? `${Math.floor(c.time / 60)}:${String(Math.floor(c.time % 60)).padStart(2, "0")}`
+                      : "";
+
+                  return (
+                    <div
+                      key={c.id}
+                      className="p-2.5 rounded-xl bg-black/40 border border-zinc-800/80 text-xs space-y-1 hover:border-zinc-700/80 transition"
+                    >
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-bold text-amber-300 flex items-center gap-1">
+                          {c.user || "观众"}
+                          {timeFormatted && (
+                            <span className="text-[9px] font-normal px-1 py-0.2 rounded bg-zinc-800 text-zinc-400">
+                              {timeFormatted}
+                            </span>
+                          )}
+                        </span>
+                        <span className="text-zinc-500 text-[10px]">
+                          {c.createdAt ? formatTimeAgo(c.createdAt) : "刚刚"}
+                        </span>
+                      </div>
+                      <p className="text-zinc-300 text-[11px] leading-relaxed break-all" style={{ color: c.color || undefined }}>
+                        {c.text}
+                      </p>
+                      <div className="flex items-center justify-end gap-1.5 text-[10px] text-zinc-500 pt-0.5">
+                        <button
+                          onClick={() => handleLikeComment(c.id)}
+                          className="flex items-center gap-1 hover:text-amber-400 transition cursor-pointer"
+                          title="点赞"
+                        >
+                          <ThumbsUp className="w-2.5 h-2.5 text-zinc-400 hover:text-amber-400" />
+                          <span>{c.likes || 0}</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
+
+            {/* 边栏发表评论/弹幕框 */}
+            <form onSubmit={handleSubmitComment} className="flex items-center gap-1.5 pt-1 border-t border-zinc-800/80">
+              <input
+                type="text"
+                value={commentInput}
+                onChange={(e) => setCommentInput(e.target.value)}
+                placeholder="说点什么发弹幕参与互动..."
+                maxLength={60}
+                className="flex-1 bg-black/50 border border-zinc-700/80 focus:border-amber-400 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-hidden transition"
+              />
+              <button
+                type="submit"
+                disabled={!commentInput.trim() || isSubmittingComment}
+                className="p-2 rounded-xl bg-[#ffcf32] text-black font-bold hover:bg-amber-400 disabled:opacity-30 transition cursor-pointer flex items-center justify-center shrink-0"
+                title="发送剧评"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </form>
           </div>
         </div>
       </div>

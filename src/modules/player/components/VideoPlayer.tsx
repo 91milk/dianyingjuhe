@@ -10,6 +10,8 @@ interface VideoPlayerProps {
   url: string;
   poster?: string;
   title?: string;
+  movieId?: string;
+  episodeId?: string;
   onTimeUpdate?: (currentTime: number, duration: number) => void;
   onEnded?: () => void;
   onOrientationDetected?: (isLandscape: boolean, width: number, height: number) => void;
@@ -25,6 +27,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   url,
   poster,
   title: _title,
+  movieId,
+  episodeId,
   onTimeUpdate,
   onEnded,
   onOrientationDetected,
@@ -281,6 +285,16 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         {/* 顶部悬浮扩展组件 (如右上角悬浮线路选择器) */}
         {children}
 
+        {/* Iframe 模式亦支持顶部弹幕覆盖层 */}
+        {enableDanmaku && (
+          <DanmakuOverlay
+            movieId={movieId}
+            episodeId={episodeId}
+            currentTime={currentSec}
+            isPlaying={true}
+          />
+        )}
+
         <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
           <span className="text-[10px] px-2 py-0.5 rounded-md bg-black/70 text-zinc-400 border border-zinc-700/80 backdrop-blur">
             网页解析播放中
@@ -303,7 +317,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
       {/* 弹幕互动发射与飞行舞台层 */}
       {enableDanmaku && (
-        <DanmakuOverlay currentTime={currentSec} isPlaying={!playError} />
+        <DanmakuOverlay
+          movieId={movieId}
+          episodeId={episodeId}
+          currentTime={currentSec}
+          isPlaying={!playError}
+        />
       )}
 
       {/* 顶部悬浮扩展组件 (如右上角悬浮线路选择器) */}
