@@ -26,7 +26,8 @@ interface DanmakuOverlayProps {
 interface ActiveDanmaku {
   uniqueId: string;
   item: DanmakuItem;
-  trackTop: number; // 百分比
+  trackTop: number; // 顶部百分比 (滚动弹幕与顶端固定弹幕)
+  trackBottom?: number; // 底部像素 (底端固定弹幕，避开底部操作栏)
   createdAt: number;
 }
 
@@ -158,23 +159,34 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
     });
 
     if (matched.length > 0) {
-      // 计算轨道上限
-      const maxTracks = config.area === "quarter" ? 3 : config.area === "half" ? 5 : 8;
+      // 计算轨道上限与安全飞行高度 (严格限制在上半部 <= 46%，避开底部控制按钮与字幕区)
+      const maxTracks = config.area === "quarter" ? 3 : config.area === "half" ? 5 : 7;
 
       const newActives: ActiveDanmaku[] = matched.map((item) => {
         firedIdsRef.current.add(item.id);
         const trackIdx = trackCounterRef.current % maxTracks;
         trackCounterRef.current += 1;
 
-        // top 模式固定在上方，bottom 模式固定在下方
-        let trackTop = 6 + trackIdx * 9;
-        if (item.type === "top") trackTop = 6 + (trackIdx % 2) * 8;
-        if (item.type === "bottom") trackTop = 68 - (trackIdx % 2) * 8;
+        // 滚动弹幕：轨道分布在 7% ~ 46%，绝不向下触碰播放器操作按钮
+        let trackTop = 7 + trackIdx * 6.5;
+        let trackBottom: number | undefined = undefined;
+
+        // top 模式固定在上方 (7% / 14%)
+        if (item.type === "top") {
+          trackTop = 7 + (trackIdx % 2) * 7;
+        }
+
+        // bottom 模式固定在下方：使用绝对像素底边距 (92px / 120px)，严格高于底部交互条 (44px + 36px)
+        if (item.type === "bottom") {
+          trackTop = 0;
+          trackBottom = 92 + (trackIdx % 2) * 28;
+        }
 
         return {
           uniqueId: `${item.id}-${Date.now()}`,
           item,
           trackTop,
+          trackBottom,
           createdAt: Date.now(),
         };
       });
@@ -215,13 +227,21 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
       likes: 0,
     };
 
-    // 立即乐观上屏，无需等待网络往返
-    const maxTracks = config.area === "quarter" ? 3 : config.area === "half" ? 5 : 8;
+    // 立即乐观上屏，无需等待网络往返 (轨道安全区分布，避免碰撞底部控制栏)
+    const maxTracks = config.area === "quarter" ? 3 : config.area === "half" ? 5 : 7;
     const trackIdx = trackCounterRef.current % maxTracks;
     trackCounterRef.current += 1;
-    let trackTop = 6 + trackIdx * 9;
-    if (selectedType === "top") trackTop = 6;
-    if (selectedType === "bottom") trackTop = 68;
+
+    let trackTop = 7 + trackIdx * 6.5;
+    let trackBottom: number | undefined = undefined;
+
+    if (selectedType === "top") {
+      trackTop = 7 + (trackIdx % 2) * 7;
+    }
+    if (selectedType === "bottom") {
+      trackTop = 0;
+      trackBottom = 92 + (trackIdx % 2) * 28;
+    }
 
     setActiveDanmus((old) => [
       ...old,
@@ -229,6 +249,7 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
         uniqueId: `local-${Date.now()}`,
         item: newDanmuItem,
         trackTop,
+        trackBottom,
         createdAt: Date.now(),
       },
     ]);
@@ -302,7 +323,8 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
               );
             }
 
-            // 顶部固定 / 底部固定弹幕：水平居中悬停 4.5 秒淡出
+            // 顶部固定 / 底部固定弹幕：水平居中悬停 4.5 秒淡出 (底端固定采用底边安全距，避开下方控制条)
+            const isBottom = dm.item.type === "bottom";
             return (
               <div
                 key={dm.uniqueId}
@@ -310,7 +332,8 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
                   isSelf ? "border border-amber-400 px-2.5 py-0.5 rounded-full bg-black/60" : "bg-black/30 px-2 py-0.5 rounded-lg"
                 }`}
                 style={{
-                  top: `${dm.trackTop}%`,
+                  top: isBottom ? undefined : `${dm.trackTop}%`,
+                  bottom: isBottom ? `${dm.trackBottom || 92}px` : undefined,
                   color: dm.item.color || "#ffffff",
                   animation: `danmuFade 4.5s ease-in-out forwards`,
                   textShadow: "1px 1px 3px rgba(0, 0, 0, 0.95), 0 0 5px rgba(0,0,0,0.8)",
@@ -332,10 +355,10 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
         </div>
       )}
 
-      {/* 底部交互控制条 (含设置、调色、弹幕输入与发送) */}
+      {/* 底部交互控制条 (含设置、调色、弹幕输入与发送)，高抬 44px~48px，避开原生播放器底层播放进度条 */}
       <div
         ref={settingsPanelRef}
-        className="absolute bottom-2.5 left-2.5 right-2.5 z-30 pointer-events-auto flex items-center justify-between gap-1.5 sm:gap-2 select-none"
+        className="absolute bottom-11 sm:bottom-12 left-2.5 right-2.5 sm:left-3 sm:right-3 z-30 pointer-events-auto flex items-center justify-between gap-1.5 sm:gap-2 select-none"
       >
         {/* 输入框与调色组 */}
         <form

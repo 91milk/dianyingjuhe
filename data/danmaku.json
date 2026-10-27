@@ -1,1 +1,93 @@
-[]
+[
+  {
+    "id": "seed-1",
+    "movieId": "default",
+    "episodeId": "default",
+    "text": "全网第一画质打卡！清晰度吹爆！",
+    "time": 5.0,
+    "color": "#ffcf32",
+    "type": "scroll",
+    "size": "md",
+    "user": "追剧小课代表",
+    "createdAt": 1792986375930,
+    "likes": 48
+  },
+  {
+    "id": "seed-2",
+    "movieId": "default",
+    "episodeId": "default",
+    "text": "注意看！细节里藏着大线索！",
+    "time": 18.5,
+    "color": "#ffffff",
+    "type": "scroll",
+    "size": "md",
+    "user": "侦探影迷",
+    "createdAt": 1793007975930,
+    "likes": 23
+  },
+  {
+    "id": "seed-3",
+    "movieId": "default",
+    "episodeId": "default",
+    "text": "前方高能预警！！！注意保护小心脏！",
+    "time": 35.0,
+    "color": "#f87171",
+    "type": "top",
+    "size": "lg",
+    "user": "熬夜冠军阿杰",
+    "createdAt": 1793029575930,
+    "likes": 96
+  },
+  {
+    "id": "seed-4",
+    "movieId": "default",
+    "episodeId": "default",
+    "text": "哈哈哈哈这一巴掌打得太解气了，爽剧爽看！",
+    "time": 52.0,
+    "color": "#4ade80",
+    "type": "scroll",
+    "size": "md",
+    "user": "逆袭本袭",
+    "createdAt": 1793043975930,
+    "likes": 64
+  },
+  {
+    "id": "seed-5",
+    "movieId": "default",
+    "episodeId": "default",
+    "text": "女主智商全程在线，这才是大女主！",
+    "time": 78.0,
+    "color": "#38bdf8",
+    "type": "scroll",
+    "size": "md",
+    "user": "剧迷小圆",
+    "createdAt": 1793058375930,
+    "likes": 31
+  },
+  {
+    "id": "seed-6",
+    "movieId": "default",
+    "episodeId": "default",
+    "text": "这配乐配合节奏直接起飞，二刷依然上头！",
+    "time": 105.0,
+    "color": "#c084fc",
+    "type": "scroll",
+    "size": "md",
+    "user": "短剧十级学者",
+    "createdAt": 1793065575930,
+    "likes": 18
+  },
+  {
+    "id": "seed-7",
+    "movieId": "default",
+    "episodeId": "default",
+    "text": "全集看完打卡，求官方火速加更第二季！",
+    "time": 140.0,
+    "color": "#f472b6",
+    "type": "bottom",
+    "size": "md",
+    "user": "催更大魔王",
+    "createdAt": 1793069175930,
+    "likes": 75
+  }
+]
