@@ -90,6 +90,16 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
         if (isMounted) setResolveProgress(60);
       }, 350);
 
+      // 前端 5 秒软超时保护：防止极端弱网下长时间卡在优选状态
+      const safetyTimer = setTimeout(() => {
+        if (isMounted) {
+          abortCtrl.abort();
+          setResolveProgress(100);
+          setResolveMessage(`已载入当前首选播放源 (共 ${movie.sources?.length || 1} 条)`);
+          setIsResolving(false);
+        }
+      }, 5000);
+
       try {
         const queryTitle = movie.title.replace(/[（(].*?[）)]/g, "").trim();
         const res = await fetch(
@@ -135,12 +145,16 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
         }
       } catch (err: unknown) {
         const isAbort = err instanceof Error && err.name === "AbortError";
-        if (!isAbort) {
+        if (isMounted) {
           setResolveProgress(100);
-          setResolveMessage("资源站响应超时，已加载备用源");
+          setResolveMessage(`已载入当前首选播放源 (共 ${movie.sources?.length || 1} 条)`);
+        }
+        if (!isAbort) {
+          console.error("Failed to resolve live shortplay sources:", err);
         }
       } finally {
         clearTimeout(t1);
+        clearTimeout(safetyTimer);
         if (isMounted) {
           setTimeout(() => {
             if (isMounted) setIsResolving(false);

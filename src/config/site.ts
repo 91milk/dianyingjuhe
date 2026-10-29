@@ -60,9 +60,9 @@ export const siteConfig = {
 
   // 采集与请求性能控制参数
   collector: {
-    timeoutMs: getEnvNumber("COLLECTOR_TIMEOUT_MS", 6000),
+    timeoutMs: getEnvNumber("COLLECTOR_TIMEOUT_MS", 3000),
     searchLimit: getEnvNumber("COLLECTOR_SEARCH_LIMIT", 25),
-    detailTimeoutMs: getEnvNumber("COLLECTOR_DETAIL_TIMEOUT_MS", 6000),
+    detailTimeoutMs: getEnvNumber("COLLECTOR_DETAIL_TIMEOUT_MS", 3500),
     syncHours: getEnvNumber("COLLECTOR_SYNC_HOURS", 24),
     imageProxyMaxBytes: getEnvNumber("IMAGE_PROXY_MAX_BYTES", 8 * 1024 * 1024), // 8MB
     imageProxyCacheSeconds: getEnvNumber("IMAGE_PROXY_CACHE_SECONDS", 86400 * 7), // 7 天

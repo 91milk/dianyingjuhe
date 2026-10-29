@@ -6,6 +6,8 @@ import { MacCmsParser } from "./maccmsParser";
 import { isSafeExternalUrl } from "@/lib/security";
 import { siteConfig } from "@/config/site";
 import { deduplicateSources } from "@/modules/movie/utils/sourceDeduplicator";
+import { siteCircuitBreaker } from "./circuitBreaker";
+import { Singleflight } from "@/lib/singleflight";
 
 const SITES_FILE_PATH = path.join(process.cwd(), "data", "resource-sites.json");
 const CACHE_FILE_PATH = path.join(process.cwd(), "data", "cms-cache.json");
@@ -317,89 +319,142 @@ export class ResourceSiteService {
     }
   }
 
+  // 1. 全局请求单飞防抖器 (Singleflight)：抑制同一时刻对同名影片的并发重复向外请求
+  private searchFlight = new Singleflight<MovieItem[]>();
+  // 2. 搜索内存 LRU 缓存：TTL 3 分钟，杜绝频繁高刷外网
+  private searchCache = new Map<string, { items: MovieItem[]; expireAt: number }>();
+
   /**
    * 并发全网搜索：跨所有已启用的资源站同时发起检索
-   * 兼顾开放 wd= 搜索的资源站以及防爬站的本地增量索引
+   * 包含：Singleflight 请求合并、3 分钟内存缓存、自适应熔断过滤与 3 秒极速超时保护
    */
   async searchAcrossSites(query: string, maxItems = 40): Promise<MovieItem[]> {
     const q = query.trim().toLowerCase();
     if (!q) return [];
 
-    const enabledSites = this.getSites()
-      .filter((s) => s.isEnabled)
-      .sort((a, b) => b.weight - a.weight);
+    const now = Date.now();
+    const cached = this.searchCache.get(q);
+    if (cached && now < cached.expireAt) {
+      return cached.items.slice(0, maxItems);
+    }
 
-    // 1. 尝试直接向支持关键词的远端接口发起搜索
-    const fetchPromises = enabledSites.map(async (site) => {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 5000);
-      try {
-        const sep = site.apiUrl.includes("?") ? "&" : "?";
-        const url = `${site.apiUrl}${sep}ac=videolist&wd=${encodeURIComponent(q)}`;
-        const res = await fetch(url, {
-          signal: controller.signal,
-          headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
-        });
-        clearTimeout(timer);
-
-        if (!res.ok) return [];
-        const data = await res.json();
-        // 若远端提示禁止搜索 (code: 1002)，返回空数组走缓存召回
-        if (data.code === 1002 || !data.list || !Array.isArray(data.list)) return [];
-
-        return data.list.map((item: MacCmsItem) => MacCmsParser.toMovieItem(item, site));
-      } catch {
-        clearTimeout(timer);
-        return [];
+    // 采用 Singleflight 单飞保护：瞬间 100 个请求只会触发 1 次真实底层外网请求
+    return this.searchFlight.do(q, async () => {
+      // 二次检查缓存 (Double-checked locking)
+      const c2 = this.searchCache.get(q);
+      if (c2 && Date.now() < c2.expireAt) {
+        return c2.items.slice(0, maxItems);
       }
-    });
 
-    const settledResults = await Promise.allSettled(fetchPromises);
-    const remoteCombined: MovieItem[] = [];
-    settledResults.forEach((res) => {
-      if (res.status === "fulfilled" && Array.isArray(res.value)) {
-        remoteCombined.push(...res.value);
+      // 仅挑选已启用且未熔断的健康站点 (若某站连续报错则直接跳过，耗时 0ms)
+      const enabledSites = this.getSites()
+        .filter((s) => s.isEnabled && siteCircuitBreaker.isAvailable(s.id))
+        .sort((a, b) => b.weight - a.weight);
+
+      // 单站超时严格限制在 3000ms 内，绝不死等
+      const timeoutMs = Math.min(siteConfig.collector.timeoutMs || 3000, 3000);
+
+      // 1. 尝试直接向支持关键词的远端接口发起搜索
+      const fetchPromises = enabledSites.map(async (site) => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const sep = site.apiUrl.includes("?") ? "&" : "?";
+          const url = `${site.apiUrl}${sep}ac=videolist&wd=${encodeURIComponent(q)}`;
+          const res = await fetch(url, {
+            signal: controller.signal,
+            headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+          });
+          clearTimeout(timer);
+
+          if (!res.ok) {
+            if (res.status >= 500 || res.status === 429) {
+              siteCircuitBreaker.recordFailure(site.id, `HTTP ${res.status}`);
+            }
+            return [];
+          }
+          const data = await res.json();
+          // 若远端提示禁止搜索 (code: 1002)，返回空数组走缓存召回
+          if (data.code === 1002 || !data.list || !Array.isArray(data.list)) return [];
+
+          // 请求成功，重置熔断失败计数
+          siteCircuitBreaker.recordSuccess(site.id);
+          return data.list.map((item: MacCmsItem) => MacCmsParser.toMovieItem(item, site));
+        } catch (err: unknown) {
+          clearTimeout(timer);
+          const reason = err instanceof Error ? err.message : String(err);
+          siteCircuitBreaker.recordFailure(site.id, reason);
+          return [];
+        }
+      });
+
+      const settledResults = await Promise.allSettled(fetchPromises);
+      const remoteCombined: MovieItem[] = [];
+      settledResults.forEach((res) => {
+        if (res.status === "fulfilled" && Array.isArray(res.value)) {
+          remoteCombined.push(...res.value);
+        }
+      });
+
+      // 2. 同时在本地同步采集缓存库中检索（完美应对禁止 wd= 的资源站）
+      const cachedItems = this.getCachedItems().filter(
+        (m) =>
+          m.title.toLowerCase().includes(q) ||
+          (m.originalTitle && m.originalTitle.toLowerCase().includes(q)) ||
+          (m.director && m.director.toLowerCase().includes(q)) ||
+          (m.actors && m.actors.some((a) => a.toLowerCase().includes(q))) ||
+          m.genres.some((g) => g.toLowerCase().includes(q)) ||
+          m.summary.toLowerCase().includes(q)
+      );
+
+      // 3. 去重合并影片与线路
+      const movieMap = new Map<string, MovieItem>();
+      [...remoteCombined, ...cachedItems].forEach((item) => {
+        const key = item.title.trim().toLowerCase();
+        if (!movieMap.has(key)) {
+          movieMap.set(key, {
+            ...item,
+            sources: deduplicateSources(item.sources),
+          });
+        } else {
+          const existing = movieMap.get(key)!;
+          existing.sources = deduplicateSources([...existing.sources, ...item.sources]);
+        }
+      });
+
+      const finalResult = Array.from(movieMap.values());
+
+      // 写入内存 LRU 缓存，控制总数不超过 500 个搜索词
+      if (this.searchCache.size > 500) {
+        const keys = Array.from(this.searchCache.keys());
+        for (let i = 0; i < 100; i++) {
+          this.searchCache.delete(keys[i]);
+        }
       }
+      this.searchCache.set(q, {
+        items: finalResult,
+        expireAt: Date.now() + 3 * 60 * 1000,
+      });
+
+      return finalResult.slice(0, maxItems);
     });
-
-    // 2. 同时在本地同步采集缓存库中检索（完美应对禁止 wd= 的资源站）
-    const cachedItems = this.getCachedItems().filter(
-      (m) =>
-        m.title.toLowerCase().includes(q) ||
-        (m.originalTitle && m.originalTitle.toLowerCase().includes(q)) ||
-        (m.director && m.director.toLowerCase().includes(q)) ||
-        (m.actors && m.actors.some((a) => a.toLowerCase().includes(q))) ||
-        m.genres.some((g) => g.toLowerCase().includes(q)) ||
-        m.summary.toLowerCase().includes(q)
-    );
-
-    // 3. 去重合并影片与线路
-    const movieMap = new Map<string, MovieItem>();
-    [...remoteCombined, ...cachedItems].forEach((item) => {
-      const key = item.title.trim().toLowerCase();
-      if (!movieMap.has(key)) {
-        movieMap.set(key, {
-          ...item,
-          sources: deduplicateSources(item.sources),
-        });
-      } else {
-        const existing = movieMap.get(key)!;
-        existing.sources = deduplicateSources([...existing.sources, ...item.sources]);
-      }
-    });
-
-    return Array.from(movieMap.values()).slice(0, maxItems);
   }
 
   /**
-   * 获取指定资源站的影片详情与完整播放列表
+   * 获取指定资源站的影片详情与完整播放列表 (熔断保护 + 3500ms 超时)
    */
   async getDetailFromSite(siteId: string, vodId: string): Promise<MovieItem | null> {
     const site = this.getSites().find((s) => s.id === siteId);
     if (!site) return null;
 
+    if (!siteCircuitBreaker.isAvailable(siteId)) {
+      console.warn(`[getDetailFromSite] 站点 [${siteId}] 处于熔断保护期，自动跳过详情拉取`);
+      return null;
+    }
+
+    const timeoutMs = Math.min(siteConfig.collector.detailTimeoutMs || 3500, 3500);
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), siteConfig.collector.detailTimeoutMs);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const sep = site.apiUrl.includes("?") ? "&" : "?";
@@ -410,13 +465,21 @@ export class ResourceSiteService {
       });
       clearTimeout(timer);
 
-      if (!res.ok) return null;
+      if (!res.ok) {
+        if (res.status >= 500 || res.status === 429) {
+          siteCircuitBreaker.recordFailure(siteId, `HTTP ${res.status}`);
+        }
+        return null;
+      }
       const data: MacCmsResponse = await res.json();
       if (!data.list || !data.list[0]) return null;
 
+      siteCircuitBreaker.recordSuccess(siteId);
       return MacCmsParser.toMovieItem(data.list[0], site);
-    } catch (e) {
+    } catch (e: unknown) {
       clearTimeout(timer);
+      const reason = e instanceof Error ? e.message : String(e);
+      siteCircuitBreaker.recordFailure(siteId, reason);
       console.error("Failed to fetch detail from site:", e);
       return null;
     }

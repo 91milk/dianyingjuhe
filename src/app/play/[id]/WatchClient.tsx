@@ -72,6 +72,16 @@ export const WatchClient: React.FC<WatchClientProps> = ({
         }
       }, 850);
 
+      // 前端 5 秒软超时保护：防止极端弱网下长时间卡在优选状态
+      const safetyTimer = setTimeout(() => {
+        if (isMounted) {
+          abortCtrl.abort();
+          setResolveProgress(100);
+          setResolveMessage(`已为您载入当前默认播放线路 (共 ${movie.sources?.length || 1} 条)`);
+          setIsResolving(false);
+        }
+      }, 5000);
+
       try {
         const queryTitle = movie.title.replace(/[（(].*?[）)]/g, "").trim();
         const res = await fetch(
@@ -126,14 +136,17 @@ export const WatchClient: React.FC<WatchClientProps> = ({
         }
       } catch (err: unknown) {
         const isAbort = err instanceof Error && err.name === "AbortError";
+        if (isMounted) {
+          setResolveProgress(100);
+          setResolveMessage(`已为您载入当前默认播放线路 (共 ${movie.sources?.length || 1} 条)`);
+        }
         if (!isAbort) {
           console.error("Failed to resolve live sources:", err);
-          setResolveProgress(100);
-          setResolveMessage("网络响应稍慢，已切换至备用优质线路");
         }
       } finally {
         clearTimeout(t1);
         clearTimeout(t2);
+        clearTimeout(safetyTimer);
         if (isMounted) {
           setTimeout(() => {
             if (isMounted) setIsResolving(false);
