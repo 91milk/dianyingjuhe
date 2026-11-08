@@ -10,6 +10,20 @@
 </p>
 
 <p align="center">
+  <img src="./public/preview_home.png" alt="首页预览" width="850" />
+</p>
+
+### 📸 界面预览 / Screenshots
+
+| 首页全景 (Home) | 9:16 短剧专属沉浸播放页 (Short Play) |
+| :---: | :---: |
+| ![首页全景](./public/preview_home.png) | ![短剧播放页](./public/preview_play_short.png) |
+
+| 16:9 电影选线播放页 (Movie Play) |
+| :---: |
+| ![电影播放页](./public/preview_play_movie.png) |
+
+<p align="center">
   <a href="#简体中文">简体中文</a> •
   <a href="#english">English</a> •
   <a href="#日本語">日本語</a> •
