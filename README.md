@@ -6,15 +6,23 @@
 </p>
 
 <p align="center">
+  🌐 <strong>在线演示 Demo:</strong> <a href="https://next.91milk.net" target="_blank">https://next.91milk.net</a>
+</p>
+
+<p align="center">
   <a href="#简体中文">简体中文</a> •
   <a href="#english">English</a> •
   <a href="#日本語">日本語</a> •
+  <a href="#部署与安装指南--installation-guide">安装指南 / Deployment</a> •
   <a href="#开源许可与引用说明--license--attribution">许可协议 / License</a>
 </p>
 
 ---
 
 ## 简体中文
+
+### 🌐 在线体验
+- **生产环境演示站**：[https://next.91milk.net](https://next.91milk.net)
 
 ### 📖 项目简介
 **DianYingJuHe（电影聚合）** 是一套基于 **Next.js 16 (App Router + Turbopack)** 架构开发的高性能、现代化影视聚合与微短剧交互平台。  
@@ -35,25 +43,12 @@
   - 本地乐观上屏 + 服务端实时持久化与点赞同步。
 - **现代响应式 UI**：基于 Tailwind CSS，极致深色模式与细腻毛玻璃质感，适配 PC 与移动端。
 
-### 🚀 快速开始
-
-```bash
-# 1. 安装依赖
-npm install
-
-# 2. 本地开发调试
-npm run dev
-
-# 3. 生产打包构建
-npm run build
-
-# 4. 生产运行
-npm run start
-```
-
 ---
 
 ## English
+
+### 🌐 Live Demo
+- **Production Demo**: [https://next.91milk.net](https://next.91milk.net)
 
 ### 📖 Overview
 **DianYingJuHe** is a modern, high-performance video aggregation and short play streaming web application built with **Next.js 16 (App Router + Turbopack)** and **TypeScript**.  
@@ -74,25 +69,12 @@ It provides intelligent multi-source racing resolution, high-concurrency protect
   - Optimistic UI updates with asynchronous persistent storage and likes.
 - **Responsive Dark UI**: Polished glassmorphism design optimized for desktop and mobile viewports.
 
-### 🚀 Quick Start
-
-```bash
-# 1. Install dependencies
-npm install
-
-# 2. Run development server
-npm run dev
-
-# 3. Build for production
-npm run build
-
-# 4. Start production server
-npm run start
-```
-
 ---
 
 ## 日本語
+
+### 🌐 オンラインデモ
+- **実稼働デモサイト**: [https://next.91milk.net](https://next.91milk.net)
 
 ### 📖 プロジェクト概要
 **DianYingJuHe** は、**Next.js 16 (App Router + Turbopack)** と **TypeScript** をベースに構築された次世代の動画アグリゲーションおよびショートドラマ（微短劇）再生プラットフォームです。  
@@ -111,6 +93,167 @@ npm run start
   - スクロール・上部固定・下部固定弾幕、カスタムカラー・サイズピッカー対応。
   - 衝突回避アルゴリズムにより、操作ボタンや字幕との重なりを防止。
 - **レスポンシブデザイン**: Tailwind CSS によるダークテーマと洗练されたグラスモーフィズム UI。
+
+---
+
+## 部署与安装指南 / Installation Guide
+
+本项目提供 **4 种主流安装部署方式**，可根据实际运行环境选择最适合的方案：
+
+### 方式一：Node.js 原生部署（推荐开发与测试）
+
+**前置要求**：Node.js `>= 18.18.0`（推荐 `20.x` LTS），已安装 `git`。
+
+```bash
+# 1. 克隆代码仓库
+git clone https://github.com/91milk/dianyingjuhe.git
+cd dianyingjuhe
+
+# 2. 安装依赖项
+npm install
+
+# 3. 环境变量配置 (可选)
+cp .env.example .env.local  # 如有需要可自定义端口与网站信息
+
+# 4. 编译构建
+npm run build
+
+# 5. 启动生产服务 (默认端口 3300)
+npm run start
+```
+启动后在浏览器访问：`http://localhost:3300`
+
+---
+
+### 方式二：Docker 容器化极速部署（推荐轻量生产）
+
+使用 Docker 可以在任何 Linux/Windows/macOS 服务器上实现环境隔离与一键运行。
+
+#### 1. 构建 Docker 镜像
+在项目根目录下执行：
+```bash
+docker build -t dianyingjuhe:latest .
+```
+
+#### 2. 运行容器
+```bash
+docker run -d \
+  --name dianyingjuhe \
+  --restart always \
+  -p 3300:3300 \
+  -v $(pwd)/data:/app/data \
+  dianyingjuhe:latest
+```
+
+---
+
+### 方式三：Docker Compose 一键编排（最简运维）
+
+使用 Docker Compose 便于管理数据卷持久化与开机自启。
+
+在项目目录中直接运行：
+```bash
+docker compose up -d
+```
+
+查看运行状态与日志：
+```bash
+docker compose ps
+docker compose logs -f
+```
+
+---
+
+### 方式四：Linux Systemd 服务 + Standalone 独立运行时（高性能高可用生产部署）
+
+本项目在 `next.config.ts` 中开启了 `output: "standalone"`，生成的独立部署包体积仅几十兆，内存占用更低且无需完整 `node_modules`。
+
+#### 1. 服务器端打包与拷贝
+```bash
+npm run build
+
+# 复制静态资源到 standalone 目录
+cp -r public .next/standalone/
+cp -r .next/static .next/standalone/.next/
+cp -r data .next/standalone/
+```
+
+#### 2. 配置 Systemd 系统守护进程
+创建 `/etc/systemd/system/dianyingjuhe.service`：
+```ini
+[Unit]
+Description=Dianyingjuhe Next.js Application
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/dianyingjuhe
+Environment=NODE_ENV=production
+Environment=PORT=3300
+Environment=HOSTNAME=0.0.0.0
+ExecStart=/usr/bin/node /opt/dianyingjuhe/server.js
+Restart=always
+RestartSec=5
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=dianyingjuhe
+
+[Install]
+WantedBy=multi-user.target
+```
+
+#### 3. 启用并启动服务
+```bash
+systemctl daemon-reload
+systemctl enable dianyingjuhe
+systemctl start dianyingjuhe
+systemctl status dianyingjuhe
+```
+
+---
+
+### 附：Nginx 反向代理与 SSL 配置示例
+
+若需要绑定自定义域名（如 `next.91milk.net`）并开启 HTTPS 访问，推荐的 Nginx 配置如下：
+
+```nginx
+server {
+    listen 80;
+    server_name next.91milk.net;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name next.91milk.net;
+
+    ssl_certificate /etc/nginx/ssl/next.91milk.net.crt;
+    ssl_certificate_key /etc/nginx/ssl/next.91milk.net.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    # 静态资源强缓存优化
+    location /_next/static {
+        proxy_pass http://127.0.0.1:3300;
+        proxy_set_header Host $host;
+        expires 365d;
+        access_log off;
+    }
+
+    # 主站反向代理
+    location / {
+        proxy_pass http://127.0.0.1:3300;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
 
 ---
 

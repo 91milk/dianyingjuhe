@@ -1,0 +1,16 @@
+services:
+  dianyingjuhe:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dianyingjuhe:latest
+    container_name: dianyingjuhe
+    restart: always
+    ports:
+      - "3300:3300"
+    environment:
+      - NODE_ENV=production
+      - PORT=3300
+      - HOSTNAME=0.0.0.0
+    volumes:
+      - ./data:/app/data
