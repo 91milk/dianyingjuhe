@@ -21,9 +21,6 @@
 
 ## 简体中文
 
-### 🌐 在线体验
-- **生产环境演示站**：[https://next.91milk.net](https://next.91milk.net)
-
 ### 📖 项目简介
 **DianYingJuHe（电影聚合）** 是一套基于 **Next.js 16 (App Router + Turbopack)** 架构开发的高性能、现代化影视聚合与微短剧交互平台。  
 系统支持多源并发聚合、秒级选线起播、智能单飞防抖、自适应熔断保护、全功能弹幕互动及左右分屏沉浸式竖屏短剧播放。
@@ -47,9 +44,6 @@
 
 ## English
 
-### 🌐 Live Demo
-- **Production Demo**: [https://next.91milk.net](https://next.91milk.net)
-
 ### 📖 Overview
 **DianYingJuHe** is a modern, high-performance video aggregation and short play streaming web application built with **Next.js 16 (App Router + Turbopack)** and **TypeScript**.  
 It provides intelligent multi-source racing resolution, high-concurrency protection (Singleflight & Circuit Breaker), vertical/horizontal dynamic short-drama playback, and a full-featured real-time danmaku (barrage) overlay system.
@@ -72,9 +66,6 @@ It provides intelligent multi-source racing resolution, high-concurrency protect
 ---
 
 ## 日本語
-
-### 🌐 オンラインデモ
-- **実稼働デモサイト**: [https://next.91milk.net](https://next.91milk.net)
 
 ### 📖 プロジェクト概要
 **DianYingJuHe** は、**Next.js 16 (App Router + Turbopack)** と **TypeScript** をベースに構築された次世代の動画アグリゲーションおよびショートドラマ（微短劇）再生プラットフォームです。  
