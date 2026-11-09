@@ -48,6 +48,10 @@
 - **微短剧沉浸体验**：
   - 针对微短剧（9:16）自动识别视频比例，支持竖屏/横屏自由切换。
   - 左右分屏交互：左侧独立视窗，右侧选集、互动与评论一体化。
+- **全站多语言与智能推荐源分流 (i18n)**：
+  - 完整支持简体中文 (`zh-CN`)、English (`en-US`)、日本語 (`ja-JP`) 实时切换。
+  - **精准推荐源分流**：中文区采用豆瓣高分榜与国内院线新片；外文区自动切换为全球 IMDb / TMDB 传奇神作榜与好莱坞焦点大片。
+  - **双向跨语言协同检索引擎**：支持用英文、日文片名直接穿透搜索国内采集站，跨语言秒级起播。
 - **全功能互动弹幕引擎**：
   - 支持滚动、顶端、底端弹幕，自带弹幕颜色与字号调节。
   - 轨道避让算法：弹幕安全区分布在屏幕上半区，底端弹幕悬浮抬高，彻底杜绝遮挡播放器控制栏与字幕。
@@ -71,6 +75,10 @@ It provides intelligent multi-source racing resolution, high-concurrency protect
 - **Dedicated Short-Drama Experience**:
   - Automatic video aspect detection (9:16 vertical vs. 16:9 widescreen) with manual toggle.
   - Split-screen layout: player view on the left, episodes list and community chat on the right.
+- **Full Internationalization & Dual Recommendation Routing (i18n)**:
+  - Supports Simplified Chinese (`zh-CN`), English (`en-US`), and Japanese (`ja-JP`) with seamless runtime switching.
+  - **Dynamic Recommendation Routing**: Douban Top-rated cinema for Chinese locales; global IMDb Top 250 and international blockbusters for overseas users.
+  - **Bidirectional Multilingual Search**: Search with native English or Japanese titles (e.g. *Oppenheimer*, *The Dark Knight*) and stream with auto-resolved HD lines.
 - **Full-Featured Interactive Danmaku Overlay**:
   - Scrolling, top-fixed, and bottom-fixed barrage with color palette and font-size customization.
   - Track collision avoidance: keeps barrages strictly within safe upper zones and elevates bottom barrages above player controls.
@@ -94,6 +102,10 @@ It provides intelligent multi-source racing resolution, high-concurrency protect
 - **縦型ショートドラマ特化 UI**:
   - 9:16（縦型）と 16:9（横型）のアスペクト比を自動認識・ワンクリック切り替え可能。
   - 左右分割レイアウト（左側にプレイヤー、右側にエピソード選択とコメント一覧）。
+- **多言語対応＆レコメンド自動振り分け (i18n)**:
+  - 簡体字中国語 (`zh-CN`)、英語 (`en-US`)、日本語 (`ja-JP`) のリアルタイム切り替えに対応。
+  - **地域別レコメンドエンジン**: 中国語圏は「豆瓣（Douban）映画ランキング」、海外・日本語圏は「IMDb / TMDB 世界歴代名作 TOP 250」を自動選定。
+  - **双方向クロスリンガル検索**: 英語・日本語の原題や邦題で検索しても、最適な高画質ストリーミング回線を自動解決して即時再生。
 - **高機能インタラクティブ弾幕システム**:
   - スクロール・上部固定・下部固定弾幕、カスタムカラー・サイズピッカー対応。
   - 衝突回避アルゴリズムにより、操作ボタンや字幕との重なりを防止。
