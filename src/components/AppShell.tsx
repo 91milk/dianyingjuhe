@@ -17,6 +17,7 @@ import { SupportedLocale } from "@/i18n/config";
 const AppShellInner: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
   const { template, setTemplate, isModern } = useTemplate();
+  const { t } = useLocale();
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [isVisionOpen, setIsVisionOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -61,27 +62,27 @@ const AppShellInner: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           <div className="mx-auto flex max-w-[1440px] flex-col justify-between gap-5 px-4 sm:flex-row sm:items-end sm:px-6 lg:px-10">
             <div>
               <p className="text-lg font-black tracking-[-0.04em] text-[#f2efe9]">
-                流量君 <span className="text-[#ef4b43]">AI</span>
+                {t.common.siteName}
               </p>
-              <p className="mt-2">© 2026 {siteConfig.name} · 基于 AI 驱动的影视发现平台</p>
+              <p className="mt-2">© 2026 {t.common.siteName} · {t.footer.slogan}</p>
             </div>
             <div className="flex flex-wrap items-center gap-4 text-[#9c9b98]">
-              <span>多源播放</span>
-              <span>AI 对话找片</span>
-              <span>以图识片</span>
+              <span>{t.footer.multiSource}</span>
+              <span>{t.footer.aiChat}</span>
+              <span>{t.footer.visualSearch}</span>
               <button
                 type="button"
                 onClick={() => setTemplate("classic")}
                 className="text-amber-400 hover:text-amber-300 transition cursor-pointer font-medium"
               >
-                切换至经典版
+                {t.footer.switchToClassic}
               </button>
               <Link
                 href="/admin/login"
                 className="text-[#777875] transition hover:text-[#f2efe9]"
-                title="管理入口"
+                title={t.footer.admin}
               >
-                管理
+                {t.footer.admin}
               </Link>
             </div>
           </div>
@@ -89,28 +90,28 @@ const AppShellInner: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       ) : (
         <footer className="border-t border-zinc-800/80 bg-zinc-950 py-8 text-center text-xs text-zinc-500">
           <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p>© 2026 {siteConfig.name} · 基于 AI 驱动的影视聚合助手</p>
+            <p>© 2026 {t.common.siteName} · {t.footer.slogan}</p>
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-zinc-400 text-xs">
-              <span>支持多源播放</span>
+              <span>{t.footer.multiSource}</span>
               <span>·</span>
-              <span>AI 对话找片</span>
+              <span>{t.footer.aiChat}</span>
               <span>·</span>
-              <span>以图识片</span>
+              <span>{t.footer.visualSearch}</span>
               <span>·</span>
               <button
                 type="button"
                 onClick={() => setTemplate("modern")}
                 className="text-[#ef4b43] hover:text-[#ff6a63] font-medium transition cursor-pointer"
               >
-                体验先锋版
+                {t.footer.switchToModern}
               </button>
               <span>·</span>
               <Link
                 href="/admin/login"
                 className="text-zinc-600 hover:text-zinc-400 transition"
-                title="管理入口"
+                title={t.footer.admin}
               >
-                管理
+                {t.footer.admin}
               </Link>
             </div>
           </div>
@@ -127,10 +128,10 @@ const AppShellInner: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               ? "border border-white/10 bg-[#ef4b43] hover:bg-[#ff5a52] text-white px-4 py-3 text-xs shadow-black/40"
               : "bg-[#ffcf32] hover:bg-[#ffe066] text-black px-3.5 py-2.5 sm:px-4 sm:py-3 shadow-amber-500/30"
           }`}
-          title="流量君 AI 找片"
+          title={t.footer.floatAiButton}
         >
           <Sparkles className={`w-4 h-4 sm:w-5 sm:h-5 ${isModern ? "" : "fill-black"}`} />
-          <span className="text-xs">流量君 AI 找片</span>
+          <span className="text-xs">{t.footer.floatAiButton}</span>
         </button>
       )}
 

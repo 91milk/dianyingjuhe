@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, ArrowRight, Search, Compass, Flame, Film } from "lucide-react";
+import { useLocale } from "@/i18n/LocaleContext";
 
 const QUICK_PROMPTS = [
   { label: "豆瓣9.5分以上殿堂神作", query: "豆瓣高分" },
@@ -14,6 +15,7 @@ const QUICK_PROMPTS = [
 
 export const AiFindBar: React.FC = () => {
   const router = useRouter();
+  const { t } = useLocale();
   const [inputVal, setInputVal] = useState("");
 
   const handleSearch = (e: React.FormEvent) => {
@@ -40,14 +42,14 @@ export const AiFindBar: React.FC = () => {
               <Sparkles className="w-4 h-4 fill-black" />
             </span>
             <span className="text-xs font-bold uppercase tracking-wider text-[#ffcf32]">
-              流量君 AI 灵感找片引擎
+              {t.common.siteName} · {t.nav.aiSearch}
             </span>
           </div>
           <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-            不知道看什么？用一句话描述你的观影心情
+            {t.home.aiFindTitle}
           </h3>
           <p className="text-xs text-zinc-400">
-            支持模糊情绪、剧情反转、特定题材与全网超清片库秒级联查
+            {t.home.aiFindDesc}
           </p>
         </div>
 
@@ -58,7 +60,7 @@ export const AiFindBar: React.FC = () => {
               type="text"
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
-              placeholder="例如：想看一部烧脑的科幻电影，或者治愈温暖的短剧..."
+              placeholder={t.home.aiFindPlaceholder}
               className="w-full pl-11 pr-24 py-3.5 rounded-2xl bg-zinc-950/80 border border-zinc-700/80 text-white placeholder-zinc-500 text-xs sm:text-sm focus:outline-none focus:border-[#ffcf32] focus:ring-2 focus:ring-[#ffcf32]/20 transition-all shadow-inner"
             />
             <Search className="w-4 h-4 text-zinc-400 absolute left-4 pointer-events-none" />
@@ -66,7 +68,7 @@ export const AiFindBar: React.FC = () => {
               type="submit"
               className="absolute right-2 px-4 py-2 rounded-xl bg-[#ffcf32] hover:bg-yellow-300 text-black font-bold text-xs transition cursor-pointer flex items-center gap-1 shadow-md shadow-amber-500/20"
             >
-              AI 探片 <ArrowRight className="w-3.5 h-3.5" />
+              {t.nav.aiSearch} <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </form>

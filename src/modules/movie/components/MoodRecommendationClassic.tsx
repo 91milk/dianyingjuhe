@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Compass,
 } from "lucide-react";
+import { useLocale } from "@/i18n/LocaleContext";
 
 interface MoodRecommendationSectionProps {
   moodCollections: Record<MoodType, MovieItem[]>;
@@ -23,6 +24,7 @@ interface MoodRecommendationSectionProps {
 export const MoodRecommendationClassic: React.FC<MoodRecommendationSectionProps> = ({
   moodCollections,
 }) => {
+  const { t } = useLocale();
   const [activeMood, setActiveMood] = useState<MoodType>("weekend");
   const [refreshStep, setRefreshStep] = useState(0);
   const [isRotating, setIsRotating] = useState(false);
@@ -71,14 +73,14 @@ export const MoodRecommendationClassic: React.FC<MoodRecommendationSectionProps>
               <Compass className="w-4 h-4" />
             </span>
             <span className="text-xs font-bold text-[#ffcf32] uppercase tracking-wider">
-              场景与情绪选片舱
+              {t.home.moodBadge}
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-            AI 灵感推荐：今天你想看点什么？
+            {t.home.moodTitle}
           </h2>
           <p className="text-xs text-zinc-400">
-            按心情场景一键秒切 · 智能混合 8 大真实片库与高分代表作
+            {t.home.moodDesc}
           </p>
         </div>
 
@@ -95,14 +97,14 @@ export const MoodRecommendationClassic: React.FC<MoodRecommendationSectionProps>
                 isRotating ? "rotate-180" : ""
               }`}
             />
-            <span>换一批</span>
+            <span>{t.home.moodShuffle}</span>
           </button>
 
           <Link
             href={`/category?q=${encodeURIComponent(activeMeta.title)}`}
             className="flex items-center gap-0.5 text-xs font-semibold text-zinc-400 hover:text-white px-2 py-1.5 rounded-lg hover:bg-zinc-800/60 transition group"
           >
-            <span>更多</span>
+            <span>{t.common.viewAll}</span>
             <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>

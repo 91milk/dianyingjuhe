@@ -8,6 +8,7 @@ import { DoubanTopRailModern } from "./DoubanTopRailModern";
 import { MoodRecommendationModern } from "./MoodRecommendationModern";
 import { MovieCardModern } from "./MovieCardModern";
 import { SectionHeading } from "./SectionHeading";
+import { useLocale } from "@/i18n/LocaleContext";
 
 interface FilmGridProps {
   movies: MovieItem[];
@@ -53,6 +54,7 @@ export const HomeModern: React.FC<HomePageData> = ({
   shortPlays,
   animes,
 }) => {
+  const { t } = useLocale();
   return (
     <div className="space-y-16 sm:space-y-24">
       <HeroPanoramaModern featuredMovies={featured} />
@@ -62,10 +64,10 @@ export const HomeModern: React.FC<HomePageData> = ({
         movies={liveUpdates}
         index="03"
         eyebrow="Live Catalogue"
-        title="今日全网实时更新"
-        description="连接多资源站的最新入库内容，把刚刚更新的剧集和电影第一时间呈现。"
+        title={t.home.liveUpdatesTitle}
+        description={t.home.liveUpdatesDesc}
         href="/category"
-        linkLabel="查看更新库"
+        linkLabel={t.home.liveUpdatesMore}
       />
 
       <DoubanTopRailModern movies={topMovies} globalMovies={globalTopMovies} />
@@ -74,10 +76,10 @@ export const HomeModern: React.FC<HomePageData> = ({
         movies={hotTvs}
         index="05"
         eyebrow="Series"
-        title="热门连载电视剧"
-        description="国产大剧、欧美精选与高口碑悬疑，持续同步最新进度。"
+        title={t.home.hotTvsTitle}
+        description={t.home.hotTvsDesc}
         href="/category?type=tv"
-        linkLabel="全部剧集"
+        linkLabel={t.home.hotTvsMore}
         ranked
       />
 
@@ -86,10 +88,10 @@ export const HomeModern: React.FC<HomePageData> = ({
           <SectionHeading
             index="06"
             eyebrow="Short & Sharp"
-            title="爆款微短剧"
-            description="短、快、直接进入情绪高点。都市逆袭、甜宠古装与高能爽剧集中呈现。"
+            title={t.home.shortPlaysTitle}
+            description={t.home.shortPlaysDesc}
             href="/category?type=shortplay"
-            linkLabel="短剧专区"
+            linkLabel={t.home.shortPlaysMore}
             inverse
           />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
@@ -104,20 +106,20 @@ export const HomeModern: React.FC<HomePageData> = ({
         movies={hotMovies}
         index="07"
         eyebrow="Now Showing"
-        title="院线与热映电影"
-        description="动作、犯罪、科幻与奇幻，把大银幕的新鲜感带到每一次播放。"
+        title={t.home.hotMoviesTitle}
+        description={t.home.hotMoviesDesc}
         href="/category?type=movie"
-        linkLabel="更多电影"
+        linkLabel={t.home.hotMoviesMore}
       />
 
       <FilmGrid
         movies={animes}
         index="08"
         eyebrow="Animation"
-        title="国漫与高燃新番"
-        description="玄幻仙侠、热血战斗与季度新番，追更不用错过每一次更新。"
+        title={t.home.animesTitle}
+        description={t.home.animesDesc}
         href="/category?type=anime"
-        linkLabel="全部动漫"
+        linkLabel={t.home.animesMore}
       />
     </div>
   );

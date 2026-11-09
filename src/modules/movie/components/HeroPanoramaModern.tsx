@@ -6,12 +6,14 @@ import { MovieItem } from "../types";
 import { Play, Info, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { getOptimizedImageUrl } from "../utils/imageHelper";
 import { encodePlayId } from "@/lib/playCipher";
+import { useLocale } from "@/i18n/LocaleContext";
 
 interface HeroPanoramaProps {
   featuredMovies: MovieItem[];
 }
 
 export const HeroPanoramaModern: React.FC<HeroPanoramaProps> = ({ featuredMovies }) => {
+  const { t } = useLocale();
   const [currentIndex, setCurrentIndex] = useState(0);
   const movies = featuredMovies.slice(0, 5);
 
@@ -61,7 +63,7 @@ export const HeroPanoramaModern: React.FC<HeroPanoramaProps> = ({ featuredMovies
             </div>
 
             <p className="mt-4 text-[11px] font-black uppercase tracking-[0.28em] text-[#ef4b43]">
-              Editorial Feature
+              {t.home.editorialFeature}
             </p>
             <h1 className="text-balance text-5xl font-black leading-[0.94] tracking-[-0.065em] text-[#f2efe9] sm:text-7xl lg:text-[92px]">
               {current.title}
@@ -77,7 +79,7 @@ export const HeroPanoramaModern: React.FC<HeroPanoramaProps> = ({ featuredMovies
 
             {current.aiHighlights?.[0] && (
               <p className="mt-5 border-l-2 border-[#ef4b43] pl-4 text-xs leading-5 text-[#aaa9a5]">
-                AI 观影提示：{current.aiHighlights[0]}
+                {t.home.aiInsight}{current.aiHighlights[0]}
               </p>
             )}
 
@@ -87,14 +89,14 @@ export const HeroPanoramaModern: React.FC<HeroPanoramaProps> = ({ featuredMovies
                 className="flex min-h-12 items-center gap-2 bg-[#ef4b43] px-6 text-sm font-black text-white transition hover:bg-[#ff5a52]"
               >
                 <Play className="h-4 w-4 fill-current" />
-                立即播放
+                {t.home.playFeaturedBt}
               </Link>
               <Link
                 href={`/movie/${encodedId}`}
                 className="flex min-h-12 items-center gap-2 border border-white/25 bg-black/20 px-6 text-sm font-bold text-[#f2efe9] transition hover:border-white/60 hover:bg-white/5"
               >
                 <Info className="h-4 w-4" />
-                查看详情
+                {t.home.viewArchiveBt}
               </Link>
             </div>
           </div>

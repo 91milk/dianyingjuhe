@@ -7,6 +7,7 @@ import { Play, Star } from "lucide-react";
 import { getOptimizedImageUrl } from "../utils/imageHelper";
 import { encodePlayId } from "@/lib/playCipher";
 import { MovieCardProps } from "./MovieCardClassic";
+import { useLocale } from "@/i18n/LocaleContext";
 
 export const MovieCardModern: React.FC<MovieCardProps> = ({
   movie,
@@ -14,6 +15,7 @@ export const MovieCardModern: React.FC<MovieCardProps> = ({
   highlightText,
   className = "",
 }) => {
+  const { t } = useLocale();
   const [imgSrc, setImgSrc] = useState(getOptimizedImageUrl(movie.poster));
   const [hasError, setHasError] = useState(false);
   const encodedId = encodePlayId(movie.id);
@@ -72,14 +74,14 @@ export const MovieCardModern: React.FC<MovieCardProps> = ({
             href={detailHref}
             className="flex min-h-9 items-center justify-center border border-white/20 px-1 text-center text-[11px] font-bold text-[#f2efe9] transition hover:border-white/50 hover:bg-white/5 sm:text-xs"
           >
-            查看详情
+            {t.common.cardDetail}
           </Link>
           <Link
             href={playHref}
             className="flex min-h-9 items-center justify-center gap-1 bg-[#ef4b43] px-1 text-center text-[11px] font-bold text-white transition hover:bg-[#ff5a52] sm:text-xs"
           >
             <Play className="h-3 w-3 fill-current" />
-            立即播放
+            {t.common.cardPlay}
           </Link>
         </div>
       </div>

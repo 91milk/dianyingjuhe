@@ -9,12 +9,14 @@ import { MovieCardModern } from "./MovieCardModern";
 import { SectionHeading } from "./SectionHeading";
 import { getOptimizedImageUrl } from "../utils/imageHelper";
 import { encodePlayId } from "@/lib/playCipher";
+import { useLocale } from "@/i18n/LocaleContext";
 
 interface MoodRecommendationSectionProps {
   moodCollections: Record<MoodType, MovieItem[]>;
 }
 
 export const MoodRecommendationModern: React.FC<MoodRecommendationSectionProps> = ({ moodCollections }) => {
+  const { t } = useLocale();
   const [activeMood, setActiveMood] = useState<MoodType>("weekend");
   const [refreshStep, setRefreshStep] = useState(0);
   const activeMeta = MOOD_DEFINITIONS.find((mood) => mood.id === activeMood) || MOOD_DEFINITIONS[0];
@@ -28,10 +30,10 @@ export const MoodRecommendationModern: React.FC<MoodRecommendationSectionProps> 
       <SectionHeading
         index="02"
         eyebrow="For Your Mood"
-        title="AI 灵感推荐"
-        description="不是先选类型，而是先回答：今天你想拥有怎样的两个小时？"
+        title={t.home.moodTitle}
+        description={t.home.moodDesc}
         href={`/category?q=${encodeURIComponent(activeMeta.title)}`}
-        linkLabel="探索更多"
+        linkLabel={t.common.viewAll}
       />
 
       <div className="flex items-center gap-2 overflow-x-auto pb-1">

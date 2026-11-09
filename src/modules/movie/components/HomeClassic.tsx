@@ -10,6 +10,7 @@ import { MoodRecommendationClassic } from "./MoodRecommendationClassic";
 import { AiFindBar } from "./AiFindBar";
 import { MovieCardClassic } from "./MovieCardClassic";
 import { Film, Tv, Zap, ChevronRight, Clapperboard, Clock } from "lucide-react";
+import { useLocale } from "@/i18n/LocaleContext";
 
 export interface HomePageData {
   featured: MovieItem[];
@@ -34,6 +35,7 @@ export const HomeClassic: React.FC<HomePageData> = ({
   shortPlays,
   animes,
 }) => {
+  const { t } = useLocale();
   return (
     <div className="space-y-8 sm:space-y-12">
       {/* 1. 顶部 Apple TV+ 风格巨幕全景轮播 */}
@@ -51,13 +53,13 @@ export const HomeClassic: React.FC<HomePageData> = ({
             </div>
             <div>
               <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight flex items-center gap-1.5 sm:gap-2">
-                今日全网实时更新
+                {t.home.liveUpdatesTitle}
                 <span className="text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  实时同步
+                  {t.home.liveUpdatesBadge}
                 </span>
               </h2>
               <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5">
-                8大采集站极速入库 · 连载追更零时差 · 超清直连播放
+                {t.home.liveUpdatesDesc}
               </p>
             </div>
           </div>
@@ -66,7 +68,7 @@ export const HomeClassic: React.FC<HomePageData> = ({
             href="/category"
             className="text-xs font-semibold text-zinc-400 hover:text-[#ffcf32] flex items-center gap-0.5 sm:gap-1 transition group"
           >
-            查看更新库{" "}
+            {t.home.liveUpdatesMore}{" "}
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
@@ -93,13 +95,13 @@ export const HomeClassic: React.FC<HomePageData> = ({
             </div>
             <div>
               <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight flex items-center gap-1.5 sm:gap-2">
-                热门连载电视剧
+                {t.home.hotTvsTitle}
                 <span className="text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                  追剧必看
+                  {t.home.hotTvsBadge}
                 </span>
               </h2>
               <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5">
-                国产大剧 · 欧美精选 · 悬疑探案 · 同步连载更新
+                {t.home.hotTvsDesc}
               </p>
             </div>
           </div>
@@ -108,7 +110,7 @@ export const HomeClassic: React.FC<HomePageData> = ({
             href="/category?type=tv"
             className="text-xs font-semibold text-zinc-400 hover:text-[#ffcf32] flex items-center gap-0.5 sm:gap-1 transition group"
           >
-            全部剧集{" "}
+            {t.home.hotTvsMore}{" "}
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
@@ -132,13 +134,13 @@ export const HomeClassic: React.FC<HomePageData> = ({
             </div>
             <div>
               <h2 className="text-lg sm:text-2xl font-black text-white flex items-center gap-1.5 sm:gap-2">
-                爆款微短剧爽剧快车道
+                {t.home.shortPlaysTitle}
                 <span className="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 uppercase tracking-wider">
-                  HOT 爽剧
+                  {t.home.shortPlaysBadge}
                 </span>
               </h2>
               <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5">
-                现代都市 · 逆袭打脸 · 战神归来 · 甜宠古装全集
+                {t.home.shortPlaysDesc}
               </p>
             </div>
           </div>
@@ -147,7 +149,7 @@ export const HomeClassic: React.FC<HomePageData> = ({
             href="/category?type=shortplay"
             className="text-xs font-bold text-[#ffcf32] hover:text-yellow-300 flex items-center gap-1 self-start sm:self-auto bg-amber-400/10 px-3 py-1.5 rounded-xl border border-amber-400/20 transition"
           >
-            短剧专区 <ChevronRight className="w-3.5 h-3.5" />
+            {t.home.shortPlaysMore} <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
@@ -167,13 +169,13 @@ export const HomeClassic: React.FC<HomePageData> = ({
             </div>
             <div>
               <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight flex items-center gap-1.5 sm:gap-2">
-                最新院线大片与热映电影
+                {t.home.hotMoviesTitle}
                 <span className="text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-amber-400/20 text-[#ffcf32] border border-amber-400/30">
-                  超清正片
+                  {t.home.hotMoviesBadge}
                 </span>
               </h2>
               <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5">
-                动作犯罪 · 科幻奇幻 · 院线公映 · 抢先超清画质
+                {t.home.hotMoviesDesc}
               </p>
             </div>
           </div>
@@ -182,7 +184,7 @@ export const HomeClassic: React.FC<HomePageData> = ({
             href="/category?type=movie"
             className="text-xs font-semibold text-zinc-400 hover:text-[#ffcf32] flex items-center gap-0.5 sm:gap-1 transition group"
           >
-            更多大片{" "}
+            {t.home.hotMoviesMore}{" "}
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
@@ -203,13 +205,13 @@ export const HomeClassic: React.FC<HomePageData> = ({
             </div>
             <div>
               <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight flex items-center gap-1.5 sm:gap-2">
-                顶流国漫与高燃新番
+                {t.home.animesTitle}
                 <span className="text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  二次元热搜
+                  {t.home.animesBadge}
                 </span>
               </h2>
               <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5">
-                玄幻仙侠 · 热血战斗 · 季番连载 · 视效盛宴
+                {t.home.animesDesc}
               </p>
             </div>
           </div>
@@ -218,7 +220,7 @@ export const HomeClassic: React.FC<HomePageData> = ({
             href="/category?type=anime"
             className="text-xs font-semibold text-zinc-400 hover:text-[#ffcf32] flex items-center gap-0.5 sm:gap-1 transition group"
           >
-            全部动漫{" "}
+            {t.home.animesMore}{" "}
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>

@@ -6,12 +6,14 @@ import { MovieItem } from "../types";
 import { Play, Info, Star, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { getOptimizedImageUrl } from "../utils/imageHelper";
 import { encodePlayId } from "@/lib/playCipher";
+import { useLocale } from "@/i18n/LocaleContext";
 
 interface HeroPanoramaProps {
   featuredMovies: MovieItem[];
 }
 
 export const HeroPanoramaClassic: React.FC<HeroPanoramaProps> = ({ featuredMovies }) => {
+  const { t } = useLocale();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // 保证有影片可轮播
@@ -111,7 +113,7 @@ export const HeroPanoramaClassic: React.FC<HeroPanoramaProps> = ({ featuredMovie
               className="flex items-center gap-2 bg-[#ffcf32] hover:bg-yellow-300 text-black font-extrabold px-7 py-3.5 rounded-2xl shadow-xl shadow-amber-500/25 transition-all duration-300 hover:scale-105 cursor-pointer text-sm"
             >
               <Play className="w-5 h-5 fill-black" />
-              立即播放正片
+              {t.home.playFeaturedBt}
             </Link>
 
             <Link
@@ -119,7 +121,7 @@ export const HeroPanoramaClassic: React.FC<HeroPanoramaProps> = ({ featuredMovie
               className="flex items-center gap-2 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 hover:text-white font-semibold px-5 py-3.5 rounded-2xl backdrop-blur-md border border-zinc-700/80 transition-all text-sm cursor-pointer"
             >
               <Info className="w-4 h-4 text-zinc-400" />
-              影评与看点档案
+              {t.home.viewArchiveBt}
             </Link>
           </div>
         </div>
@@ -127,7 +129,7 @@ export const HeroPanoramaClassic: React.FC<HeroPanoramaProps> = ({ featuredMovie
         {/* 右侧：交互式微型画廊选片栏 (仿 Apple TV+ 悬浮缩略导航) */}
         <div className="hidden lg:flex flex-col gap-3 shrink-0">
           <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center justify-between">
-            <span>正在展映推荐 ({currentIndex + 1} / {movies.length})</span>
+            <span>{t.home.nowScreening} ({currentIndex + 1} / {movies.length})</span>
             <span className="flex items-center gap-1">
               <button
                 type="button"

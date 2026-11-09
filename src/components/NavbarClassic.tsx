@@ -55,7 +55,14 @@ export const NavbarClassic: React.FC<NavbarProps> = ({
 
         {/* 桌面端主分类导航 */}
         <nav className="hidden md:flex items-center gap-1 text-xs font-semibold text-zinc-300">
-          {siteConfig.navItems.map((item) => {
+          {[
+            { title: t.nav.home, href: "/" },
+            { title: t.nav.movie, href: "/category?type=movie" },
+            { title: t.nav.tv, href: "/category?type=tv" },
+            { title: t.nav.shortplay, href: "/category?type=shortplay" },
+            { title: t.nav.anime, href: "/category?type=anime" },
+            { title: t.nav.variety, href: "/category?type=variety" },
+          ].map((item) => {
             const isShortPlay = item.href.includes("shortplay");
             return (
               <Link
@@ -169,7 +176,14 @@ export const NavbarClassic: React.FC<NavbarProps> = ({
 
       {/* 移动端全品类快速导航栏 */}
       <div className="flex md:hidden items-center gap-2 px-3 py-1.5 overflow-x-auto no-scrollbar border-t border-zinc-800/60 bg-black/40">
-        {siteConfig.navItems.map((item) => {
+        {[
+          { title: t.nav.home, href: "/" },
+          { title: t.nav.movie, href: "/category?type=movie" },
+          { title: t.nav.tv, href: "/category?type=tv" },
+          { title: t.nav.shortplay, href: "/category?type=shortplay" },
+          { title: t.nav.anime, href: "/category?type=anime" },
+          { title: t.nav.variety, href: "/category?type=variety" },
+        ].map((item) => {
           const isShortPlay = item.href.includes("shortplay");
           return (
             <Link
