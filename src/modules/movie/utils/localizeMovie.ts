@@ -97,3 +97,31 @@ export function getLocalizedMovie(movie: MovieItem, locale: SupportedLocale = "z
     updateStatus: localizedStatus,
   };
 }
+
+/**
+ * 双向跨语言片名协同检索：
+ * 当用户或接口使用外文片名 (如 "The Dark Knight"、"Oppenheimer"、"Interstellar" 等) 检索时，
+ * 自动提取出其关联的标准中文名，保证无论用哪种语言搜索，都能精准命中上游各大采集站的超清资源！
+ */
+export function getMultilingualSearchKeywords(query: string): string[] {
+  if (!query) return [];
+  const q = query.trim().toLowerCase();
+  const keywords = new Set<string>();
+  keywords.add(query.trim());
+
+  for (const [cnTitle, trans] of Object.entries(TITLE_I18N)) {
+    if (
+      cnTitle.toLowerCase() === q ||
+      trans.en.toLowerCase() === q ||
+      trans.ja.toLowerCase() === q ||
+      trans.en.toLowerCase().includes(q) ||
+      q.includes(trans.en.toLowerCase())
+    ) {
+      keywords.add(cnTitle);
+      keywords.add(trans.en);
+    }
+  }
+
+  return Array.from(keywords);
+}
+

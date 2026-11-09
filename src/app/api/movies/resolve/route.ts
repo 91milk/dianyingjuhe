@@ -5,6 +5,7 @@ import { siteConfig } from "@/config/site";
 import { sanitizeInput } from "@/lib/security";
 import { deduplicateSources } from "@/modules/movie/utils/sourceDeduplicator";
 import { Singleflight } from "@/lib/singleflight";
+import { getMultilingualSearchKeywords } from "@/modules/movie/utils/localizeMovie";
 
 // 响应结构定义
 interface ResolveResponsePayload {
@@ -180,9 +181,12 @@ export async function GET(request: NextRequest) {
 
       // 2. 跨全网所有已启用资源站发起并发全量检索 (全网、茅台、如意、暴风、非凡、魔都、红牛等全部聚合)
       const currentRawKey = targetTitle || title || "";
-      const currentCleanKey = cleanTitleForSearch(currentRawKey);
+      const searchKeywords = getMultilingualSearchKeywords(currentRawKey);
 
-      if (currentCleanKey) {
+      for (const rawKw of searchKeywords) {
+        const currentCleanKey = cleanTitleForSearch(rawKw);
+        if (!currentCleanKey) continue;
+
         try {
           const results = await resourceSiteService.searchAcrossSites(currentCleanKey, siteConfig.collector.searchLimit);
 
@@ -190,7 +194,7 @@ export async function GET(request: NextRequest) {
           const exactMatches: MovieItem[] = [];
 
           for (const item of results) {
-            if (isExactMovieMatch(currentRawKey, item.title)) {
+            if (isExactMovieMatch(rawKw, item.title) || isExactMovieMatch(currentRawKey, item.title)) {
               exactMatches.push(item);
             }
           }
@@ -203,7 +207,7 @@ export async function GET(request: NextRequest) {
           } else {
             // 仅当 0 个完全精确匹配时，进行极高置信度前缀兜底（严格保证集数/季数序号完全相同且无多余故事词）
             const fallbackCandidates = results.filter((item) => {
-              const cTarget = cleanTitleForMatch(currentRawKey);
+              const cTarget = cleanTitleForMatch(rawKw);
               const cCand = cleanTitleForMatch(item.title);
               const tNums = (cTarget.match(/\d+/g) || []).join(",");
               const cNums = (cCand.match(/\d+/g) || []).join(",");
@@ -218,13 +222,22 @@ export async function GET(request: NextRequest) {
             matchedItems = fallbackCandidates;
           }
 
-          // 将严格匹配影片的播放线路全部汇聚
-          for (const item of matchedItems) {
-            if (item.sources && item.sources.length > 0) {
-              resolvedSources.push(...item.sources);
+          if (matchedItems.length > 0) {
+            for (const item of matchedItems) {
+              if (item.sources && item.sources.length > 0) {
+                resolvedSources.push(...item.sources);
+              }
             }
+            // 找到了匹配资源，停止遍历后续备用关键词
+            break;
           }
+        } catch (err) {
+          console.warn("[resolve] search query failed for kw:", rawKw, err);
+        }
+      }
 
+      if (resolvedSources.length > 0) {
+        try {
           // 执行专业级智能去重：同一个资源站严格只保留 1 条最佳 m3u8 直链线路，彻底剔除冗余云播/iframe
           resolvedSources = deduplicateSources(resolvedSources);
 

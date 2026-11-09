@@ -5,6 +5,7 @@ import { trendingMovies } from "./trendingService";
 import { mockMovies } from "./mockData";
 import { resourceSiteService } from "@/modules/collector/services/resourceSiteService";
 import { doubanService, isCleanMovieItem } from "./doubanService";
+import { getMultilingualSearchKeywords } from "../utils/localizeMovie";
 
 export class MovieService {
   // 本地兜底备用片库 (仅当资源站断网时使用)
@@ -244,14 +245,18 @@ export class MovieService {
     const q = query.trim().toLowerCase();
     if (!q) return [];
 
-    try {
-      const cmsResults = await resourceSiteService.searchAcrossSites(query);
-      if (cmsResults.length > 0) {
-        const cleanResults = cmsResults.filter(isCleanMovieItem);
-        if (cleanResults.length > 0) return cleanResults;
+    const searchKeywords = getMultilingualSearchKeywords(query);
+
+    for (const kw of searchKeywords) {
+      try {
+        const cmsResults = await resourceSiteService.searchAcrossSites(kw);
+        if (cmsResults.length > 0) {
+          const cleanResults = cmsResults.filter(isCleanMovieItem);
+          if (cleanResults.length > 0) return cleanResults;
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
     }
 
     return this.fallbackMovies.filter(
