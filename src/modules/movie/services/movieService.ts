@@ -1,6 +1,6 @@
 import { MovieItem, FilterOptions, MovieCategory } from "../types";
 import { doubanMovies } from "./doubanData";
-import { globalImdbMovies } from "./globalMovieData";
+import { globalImdbMovies, globalFeaturedMovies } from "./globalMovieData";
 import { trendingMovies } from "./trendingService";
 import { mockMovies } from "./mockData";
 import { resourceSiteService } from "@/modules/collector/services/resourceSiteService";
@@ -11,9 +11,13 @@ export class MovieService {
   private fallbackMovies: MovieItem[] = [...doubanMovies, ...globalImdbMovies, ...trendingMovies, ...mockMovies];
 
   /**
-   * 获取精选轮播/焦点大片 (100% 引用豆瓣高分口碑与院线年度大作，绝无杂乱会议/晚会)
+   * 获取精选轮播/焦点大片
+   * 中文区优先使用豆瓣口碑与院线大片，外文国际区自动使用全球殿堂级大作 (Oppenheimer, Dune 2, Interstellar...)
    */
-  async getFeaturedMovies(): Promise<MovieItem[]> {
+  async getFeaturedMovies(locale: string = "zh-CN"): Promise<MovieItem[]> {
+    if (locale !== "zh-CN") {
+      return globalFeaturedMovies;
+    }
     return doubanService.getFeaturedMovies();
   }
 

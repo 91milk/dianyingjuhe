@@ -7,13 +7,14 @@ import { Play, Info, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { getOptimizedImageUrl } from "../utils/imageHelper";
 import { encodePlayId } from "@/lib/playCipher";
 import { useLocale } from "@/i18n/LocaleContext";
+import { getLocalizedMovie } from "../utils/localizeMovie";
 
 interface HeroPanoramaProps {
   featuredMovies: MovieItem[];
 }
 
 export const HeroPanoramaModern: React.FC<HeroPanoramaProps> = ({ featuredMovies }) => {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [currentIndex, setCurrentIndex] = useState(0);
   const movies = featuredMovies.slice(0, 5);
 
@@ -27,7 +28,7 @@ export const HeroPanoramaModern: React.FC<HeroPanoramaProps> = ({ featuredMovies
 
   if (movies.length === 0) return null;
 
-  const current = movies[currentIndex];
+  const current = getLocalizedMovie(movies[currentIndex], locale);
   const encodedId = encodePlayId(current.id);
 
   return (

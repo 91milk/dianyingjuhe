@@ -1,6 +1,7 @@
 import { MovieItem } from "../types";
 import { MoodType, MoodMeta, MOOD_DEFINITIONS } from "../types/mood";
 import { doubanMovies } from "./doubanData";
+import { globalImdbMovies } from "./globalMovieData";
 import { trendingMovies } from "./trendingService";
 import { mockMovies } from "./mockData";
 import { resourceSiteService } from "@/modules/collector/services/resourceSiteService";
@@ -10,12 +11,16 @@ export { MOOD_DEFINITIONS };
 export type { MoodType, MoodMeta };
 
 class MoodRecommendationService {
-  private fallbackPool: MovieItem[] = [...doubanMovies, ...trendingMovies, ...mockMovies];
+  private fallbackPoolZh: MovieItem[] = [...doubanMovies, ...trendingMovies, ...mockMovies];
+  private fallbackPoolGlobal: MovieItem[] = [...globalImdbMovies, ...mockMovies, ...doubanMovies];
 
   /**
    * 获取指定场景/情绪下的全部推荐候选片单
    */
-  async getMoodCandidatePool(mood: MoodType): Promise<MovieItem[]> {
+  async getMoodCandidatePool(mood: MoodType, locale: string = "zh-CN"): Promise<MovieItem[]> {
+    const isGlobal = locale !== "zh-CN";
+    const basePool = isGlobal ? this.fallbackPoolGlobal : this.fallbackPoolZh;
+
     let livePool: MovieItem[] = [];
     try {
       livePool = await resourceSiteService.getLivePool();
@@ -23,9 +28,9 @@ class MoodRecommendationService {
       livePool = [];
     }
 
-    // 优先呈现豆瓣高分权威精选，再衔接过滤后的实时流
+    // 优先呈现权威精选（中文用豆瓣高分，外文用IMDb全球大作）
     const cleanLive = livePool.filter(isCleanMovieItem);
-    const allMovies = [...this.fallbackPool.filter(isCleanMovieItem), ...cleanLive];
+    const allMovies = [...basePool.filter(isCleanMovieItem), ...cleanLive];
     const seen = new Set<string>();
     const deduplicated: MovieItem[] = [];
 
@@ -119,7 +124,7 @@ class MoodRecommendationService {
 
     // 若某场景匹配数量较少，从备用池中智能补齐
     if (filtered.length < 8) {
-      const extra = this.fallbackPool.filter(
+      const extra = basePool.filter(
         (m) => !seen.has(m.title.trim().toLowerCase())
       );
       filtered = [...filtered, ...extra.slice(0, 8 - filtered.length)];
@@ -131,10 +136,10 @@ class MoodRecommendationService {
   /**
    * 预取全部 6 大场景的片库字典，供首页客户端零延迟秒切
    */
-  async getInitialMoodCollections(): Promise<Record<MoodType, MovieItem[]>> {
+  async getInitialMoodCollections(locale: string = "zh-CN"): Promise<Record<MoodType, MovieItem[]>> {
     const results: Partial<Record<MoodType, MovieItem[]>> = {};
     for (const mood of MOOD_DEFINITIONS) {
-      results[mood.id] = await this.getMoodCandidatePool(mood.id);
+      results[mood.id] = await this.getMoodCandidatePool(mood.id, locale);
     }
     return results as Record<MoodType, MovieItem[]>;
   }

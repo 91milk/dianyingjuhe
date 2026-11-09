@@ -7,13 +7,14 @@ import { Play, Info, Star, Sparkles, ChevronLeft, ChevronRight } from "lucide-re
 import { getOptimizedImageUrl } from "../utils/imageHelper";
 import { encodePlayId } from "@/lib/playCipher";
 import { useLocale } from "@/i18n/LocaleContext";
+import { getLocalizedMovie } from "../utils/localizeMovie";
 
 interface HeroPanoramaProps {
   featuredMovies: MovieItem[];
 }
 
 export const HeroPanoramaClassic: React.FC<HeroPanoramaProps> = ({ featuredMovies }) => {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // 保证有影片可轮播
@@ -30,7 +31,7 @@ export const HeroPanoramaClassic: React.FC<HeroPanoramaProps> = ({ featuredMovie
 
   if (movies.length === 0) return null;
 
-  const current = movies[currentIndex];
+  const current = getLocalizedMovie(movies[currentIndex], locale);
 
   return (
     <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 -mt-6 min-h-[460px] md:min-h-[580px] lg:min-h-[640px] flex items-end overflow-hidden group select-none">

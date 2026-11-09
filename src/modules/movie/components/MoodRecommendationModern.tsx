@@ -10,19 +10,21 @@ import { SectionHeading } from "./SectionHeading";
 import { getOptimizedImageUrl } from "../utils/imageHelper";
 import { encodePlayId } from "@/lib/playCipher";
 import { useLocale } from "@/i18n/LocaleContext";
+import { getLocalizedMovie } from "../utils/localizeMovie";
 
 interface MoodRecommendationSectionProps {
   moodCollections: Record<MoodType, MovieItem[]>;
 }
 
 export const MoodRecommendationModern: React.FC<MoodRecommendationSectionProps> = ({ moodCollections }) => {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [activeMood, setActiveMood] = useState<MoodType>("weekend");
   const [refreshStep, setRefreshStep] = useState(0);
   const activeMeta = MOOD_DEFINITIONS.find((mood) => mood.id === activeMood) || MOOD_DEFINITIONS[0];
   const candidates = moodCollections[activeMood] || [];
   const start = candidates.length > 0 ? (refreshStep * 5) % candidates.length : 0;
-  const displayed = [...candidates.slice(start), ...candidates.slice(0, start)].slice(0, 5);
+  const rawDisplayed = [...candidates.slice(start), ...candidates.slice(0, start)].slice(0, 5);
+  const displayed = rawDisplayed.map((m) => getLocalizedMovie(m, locale));
   const feature = displayed[0];
 
   return (

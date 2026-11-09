@@ -16,6 +16,7 @@ import {
   Compass,
 } from "lucide-react";
 import { useLocale } from "@/i18n/LocaleContext";
+import { getLocalizedMovie } from "../utils/localizeMovie";
 
 interface MoodRecommendationSectionProps {
   moodCollections: Record<MoodType, MovieItem[]>;
@@ -24,7 +25,7 @@ interface MoodRecommendationSectionProps {
 export const MoodRecommendationClassic: React.FC<MoodRecommendationSectionProps> = ({
   moodCollections,
 }) => {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [activeMood, setActiveMood] = useState<MoodType>("weekend");
   const [refreshStep, setRefreshStep] = useState(0);
   const [isRotating, setIsRotating] = useState(false);
@@ -60,7 +61,7 @@ export const MoodRecommendationClassic: React.FC<MoodRecommendationSectionProps>
         candidatePool.slice(0, pageSize - items.length)
       );
     }
-    return items;
+    return items.map((m) => getLocalizedMovie(m, locale));
   })();
 
   return (

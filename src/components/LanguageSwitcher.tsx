@@ -57,6 +57,9 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ className = 
                 onClick={() => {
                   setLocale(key);
                   setIsOpen(false);
+                  if (key !== locale) {
+                    window.location.reload();
+                  }
                 }}
                 className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-left transition cursor-pointer ${
                   isSelected

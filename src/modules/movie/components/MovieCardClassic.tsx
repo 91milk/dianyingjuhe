@@ -6,6 +6,8 @@ import { MovieItem } from "../types";
 import { Play, Star, Sparkles } from "lucide-react";
 import { getOptimizedImageUrl } from "../utils/imageHelper";
 import { encodePlayId } from "@/lib/playCipher";
+import { useLocale } from "@/i18n/LocaleContext";
+import { getLocalizedMovie } from "../utils/localizeMovie";
 
 export interface MovieCardProps {
   movie: MovieItem;
@@ -15,11 +17,13 @@ export interface MovieCardProps {
 }
 
 export const MovieCardClassic: React.FC<MovieCardProps> = ({
-  movie,
+  movie: rawMovie,
   rank,
   highlightText,
   className = "",
 }) => {
+  const { locale } = useLocale();
+  const movie = getLocalizedMovie(rawMovie, locale);
   const [imgSrc, setImgSrc] = useState<string>(getOptimizedImageUrl(movie.poster));
   const [hasError, setHasError] = useState(false);
 

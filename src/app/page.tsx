@@ -1,13 +1,18 @@
 import { Suspense } from "react";
+import { cookies } from "next/headers";
 import { movieService } from "@/modules/movie/services/movieService";
 import { moodRecommendationService } from "@/modules/movie/services/moodRecommendationService";
 import { HomeContainer } from "@/modules/movie/components/HomeContainer";
+import { LOCALE_COOKIE_NAME, SupportedLocale, DEFAULT_LOCALE } from "@/i18n/config";
 
 // 强制动态渲染与实时刷新，杜绝服务端与客户端路由脏缓存
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 async function HomeContent() {
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get(LOCALE_COOKIE_NAME)?.value as SupportedLocale) || DEFAULT_LOCALE;
+
   const [
     featured,
     moodCollections,
@@ -19,8 +24,8 @@ async function HomeContent() {
     shortPlays,
     animes,
   ] = await Promise.all([
-    movieService.getFeaturedMovies(),
-    moodRecommendationService.getInitialMoodCollections(),
+    movieService.getFeaturedMovies(locale),
+    moodRecommendationService.getInitialMoodCollections(locale),
     movieService.getDoubanTopMovies(10),
     movieService.getGlobalTopMovies(10),
     movieService.getLiveLatestMovies(8),

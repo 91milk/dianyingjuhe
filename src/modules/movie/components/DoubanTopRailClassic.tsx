@@ -7,6 +7,7 @@ import { Play, Star, ChevronLeft, ChevronRight, Trophy, Flame } from "lucide-rea
 import { getOptimizedImageUrl } from "../utils/imageHelper";
 import { encodePlayId } from "@/lib/playCipher";
 import { useLocale } from "@/i18n/LocaleContext";
+import { getLocalizedMovie } from "../utils/localizeMovie";
 
 interface DoubanTopRailProps {
   movies: MovieItem[];
@@ -15,10 +16,11 @@ interface DoubanTopRailProps {
 
 export const DoubanTopRailClassic: React.FC<DoubanTopRailProps> = ({ movies, globalMovies = [] }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { isChinese, t } = useLocale();
+  const { isChinese, locale, t } = useLocale();
 
   // 中文区使用豆瓣源，外文区自动使用全球 IMDb / TMDB 传奇神作榜
-  const displayMovies = (!isChinese && globalMovies.length > 0) ? globalMovies : movies;
+  const rawDisplayMovies = (!isChinese && globalMovies.length > 0) ? globalMovies : movies;
+  const displayMovies = rawDisplayMovies.map((m) => getLocalizedMovie(m, locale));
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
@@ -153,7 +155,7 @@ export const DoubanTopRailClassic: React.FC<DoubanTopRailProps> = ({ movies, glo
                   {isTopThree && (
                     <span className="flex items-center gap-0.5 text-amber-400 font-bold">
                       <Flame className="w-3 h-3 fill-amber-400" />
-                      热映
+                      {isChinese ? "热映" : (locale === "ja-JP" ? "注目" : "Top")}
                     </span>
                   )}
                 </div>

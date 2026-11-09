@@ -6,6 +6,7 @@ import { MovieItem } from "../types";
 import { MovieCardModern } from "./MovieCardModern";
 import { SectionHeading } from "./SectionHeading";
 import { useLocale } from "@/i18n/LocaleContext";
+import { getLocalizedMovie } from "../utils/localizeMovie";
 
 interface DoubanTopRailProps {
   movies: MovieItem[];
@@ -14,9 +15,10 @@ interface DoubanTopRailProps {
 
 export const DoubanTopRailModern: React.FC<DoubanTopRailProps> = ({ movies, globalMovies = [] }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { isChinese, t } = useLocale();
+  const { isChinese, locale, t } = useLocale();
 
-  const displayMovies = (!isChinese && globalMovies.length > 0) ? globalMovies : movies;
+  const rawDisplayMovies = (!isChinese && globalMovies.length > 0) ? globalMovies : movies;
+  const displayMovies = rawDisplayMovies.map((m) => getLocalizedMovie(m, locale));
 
   if (displayMovies.length === 0) return null;
 
