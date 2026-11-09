@@ -12,6 +12,7 @@ async function HomeContent() {
     featured,
     moodCollections,
     topMovies,
+    globalTopMovies,
     liveUpdates,
     hotMovies,
     hotTvs,
@@ -21,6 +22,7 @@ async function HomeContent() {
     movieService.getFeaturedMovies(),
     moodRecommendationService.getInitialMoodCollections(),
     movieService.getDoubanTopMovies(10),
+    movieService.getGlobalTopMovies(10),
     movieService.getLiveLatestMovies(8),
     movieService.getHotMovies(8),
     movieService.getHotTvs(8),
@@ -33,6 +35,7 @@ async function HomeContent() {
       featured={featured}
       moodCollections={moodCollections}
       topMovies={topMovies}
+      globalTopMovies={globalTopMovies}
       liveUpdates={liveUpdates}
       hotMovies={hotMovies}
       hotTvs={hotTvs}

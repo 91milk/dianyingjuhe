@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { siteConfig } from "@/config/site";
 import { AppShell } from "@/components/AppShell";
 import { TEMPLATE_COOKIE_NAME, SiteTemplate } from "@/context/TemplateContext";
+import { LOCALE_COOKIE_NAME, SupportedLocale, DEFAULT_LOCALE } from "@/i18n/config";
 import "./globals.css";
 
 const siteUrl = siteConfig.url.startsWith("http")
@@ -74,6 +75,7 @@ export default async function RootLayout({
 }) {
   const cookieStore = await cookies();
   const initialTemplate = (cookieStore.get(TEMPLATE_COOKIE_NAME)?.value as SiteTemplate) || "classic";
+  const initialLocale = (cookieStore.get(LOCALE_COOKIE_NAME)?.value as SupportedLocale) || DEFAULT_LOCALE;
 
   // 生成标准搜索引擎站点与搜索入口微数据 (Schema.org JSON-LD)
   const jsonLd = {
@@ -95,7 +97,7 @@ export default async function RootLayout({
 
   return (
     <html
-      lang="zh-CN"
+      lang={initialLocale}
       className="dark"
       data-template={initialTemplate}
       suppressHydrationWarning
@@ -108,7 +110,9 @@ export default async function RootLayout({
       </head>
       <body className="antialiased" suppressHydrationWarning>
         <Suspense fallback={null}>
-          <AppShell initialTemplate={initialTemplate}>{children}</AppShell>
+          <AppShell initialTemplate={initialTemplate} initialLocale={initialLocale}>
+            {children}
+          </AppShell>
         </Suspense>
       </body>
     </html>

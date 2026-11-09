@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { Search, Film, Clock, Camera, Sparkles, X } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { TemplateSwitcher } from "./TemplateSwitcher";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useLocale } from "@/i18n/LocaleContext";
 
 interface NavbarProps {
   onOpenAiChat?: () => void;
@@ -19,6 +21,7 @@ export const NavbarClassic: React.FC<NavbarProps> = ({
   onOpenVisionSearch,
 }) => {
   const router = useRouter();
+  const { t } = useLocale();
   const [keyword, setKeyword] = useState("");
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
@@ -87,7 +90,7 @@ export const NavbarClassic: React.FC<NavbarProps> = ({
             type="text"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            placeholder="搜索电影、电视剧、演员..."
+            placeholder={t.common.searchPlaceholder}
             className="w-full bg-zinc-900/90 border border-zinc-700/80 focus:border-[#ffcf32] rounded-full pl-9 pr-10 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-hidden transition"
           />
           <Search className="w-4 h-4 text-zinc-400 absolute left-3 pointer-events-none" />
@@ -95,6 +98,9 @@ export const NavbarClassic: React.FC<NavbarProps> = ({
 
         {/* 功能按钮群 */}
         <div className="flex items-center gap-1 sm:gap-2">
+          {/* 语言国际化切换器 */}
+          <LanguageSwitcher />
+
           {/* 模板切换器 */}
           <TemplateSwitcher />
 

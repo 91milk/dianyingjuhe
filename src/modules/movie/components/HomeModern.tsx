@@ -46,6 +46,7 @@ export const HomeModern: React.FC<HomePageData> = ({
   featured,
   moodCollections,
   topMovies,
+  globalTopMovies,
   liveUpdates,
   hotMovies,
   hotTvs,
@@ -67,7 +68,7 @@ export const HomeModern: React.FC<HomePageData> = ({
         linkLabel="查看更新库"
       />
 
-      <DoubanTopRailModern movies={topMovies} />
+      <DoubanTopRailModern movies={topMovies} globalMovies={globalTopMovies} />
 
       <FilmGrid
         movies={hotTvs}

@@ -15,6 +15,7 @@ export interface HomePageData {
   featured: MovieItem[];
   moodCollections: Record<MoodType, MovieItem[]>;
   topMovies: MovieItem[];
+  globalTopMovies?: MovieItem[];
   liveUpdates: MovieItem[];
   hotMovies: MovieItem[];
   hotTvs: MovieItem[];
@@ -26,6 +27,7 @@ export const HomeClassic: React.FC<HomePageData> = ({
   featured,
   moodCollections,
   topMovies,
+  globalTopMovies,
   liveUpdates,
   hotMovies,
   hotTvs,
@@ -76,8 +78,8 @@ export const HomeClassic: React.FC<HomePageData> = ({
         </div>
       </section>
 
-      {/* 4. 豆瓣高分口碑榜单 (TOP 10 封神长廊) */}
-      <DoubanTopRailClassic movies={topMovies} />
+      {/* 4. 口碑榜单 (中文区：豆瓣 TOP 10；外文区：IMDb / TMDB 全球 TOP 10) */}
+      <DoubanTopRailClassic movies={topMovies} globalMovies={globalTopMovies} />
 
       {/* AI 自然语言灵感搜片条 */}
       <AiFindBar />

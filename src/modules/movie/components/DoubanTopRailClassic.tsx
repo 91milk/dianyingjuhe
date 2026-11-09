@@ -6,13 +6,19 @@ import { MovieItem } from "../types";
 import { Play, Star, ChevronLeft, ChevronRight, Trophy, Flame } from "lucide-react";
 import { getOptimizedImageUrl } from "../utils/imageHelper";
 import { encodePlayId } from "@/lib/playCipher";
+import { useLocale } from "@/i18n/LocaleContext";
 
 interface DoubanTopRailProps {
   movies: MovieItem[];
+  globalMovies?: MovieItem[];
 }
 
-export const DoubanTopRailClassic: React.FC<DoubanTopRailProps> = ({ movies }) => {
+export const DoubanTopRailClassic: React.FC<DoubanTopRailProps> = ({ movies, globalMovies = [] }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { isChinese, t } = useLocale();
+
+  // 中文区使用豆瓣源，外文区自动使用全球 IMDb / TMDB 传奇神作榜
+  const displayMovies = (!isChinese && globalMovies.length > 0) ? globalMovies : movies;
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
@@ -21,7 +27,7 @@ export const DoubanTopRailClassic: React.FC<DoubanTopRailProps> = ({ movies }) =
     }
   };
 
-  if (!movies || movies.length === 0) return null;
+  if (!displayMovies || displayMovies.length === 0) return null;
 
   return (
     <div className="relative space-y-4 my-8">
@@ -33,13 +39,13 @@ export const DoubanTopRailClassic: React.FC<DoubanTopRailProps> = ({ movies }) =
               <Trophy className="w-4 h-4 fill-black" />
             </span>
             <span className="text-xs font-bold text-[#ffcf32] uppercase tracking-wider">
-              本周口碑殿堂 TOP 10
+              {isChinese ? "本周口碑殿堂 TOP 10" : "Global Hall of Fame TOP 10"}
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-            豆瓣高分热搜榜单
+            {isChinese ? t.home.rankingTitleDouban : t.home.rankingTitleImdb}
             <span className="text-xs font-normal text-zinc-400 hidden sm:inline">
-              · 影迷必看的口碑封神之作
+              · {isChinese ? t.home.rankingDescDouban : t.home.rankingDescImdb}
             </span>
           </h2>
         </div>
@@ -72,7 +78,7 @@ export const DoubanTopRailClassic: React.FC<DoubanTopRailProps> = ({ movies }) =
         ref={scrollRef}
         className="flex gap-3.5 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-2 pt-1"
       >
-        {movies.map((movie, index) => {
+        {displayMovies.map((movie, index) => {
           const rank = index + 1;
           const isTopThree = rank <= 3;
 

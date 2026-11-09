@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { Camera, Clock, Search, Sparkles, X } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { TemplateSwitcher } from "./TemplateSwitcher";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useLocale } from "@/i18n/LocaleContext";
 
 interface NavbarProps {
   onOpenAiChat?: () => void;
@@ -19,6 +21,7 @@ export const NavbarModern: React.FC<NavbarProps> = ({
   onOpenVisionSearch,
 }) => {
   const router = useRouter();
+  const { t } = useLocale();
   const [keyword, setKeyword] = useState("");
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
@@ -58,13 +61,16 @@ export const NavbarModern: React.FC<NavbarProps> = ({
           <input
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
-            placeholder="搜索电影、剧集、演员"
+            placeholder={t.common.searchPlaceholder}
             aria-label="搜索影片"
             className="h-10 w-full rounded-full border border-white/12 bg-white/[0.045] pl-11 pr-4 text-sm text-[#f2efe9] placeholder:text-[#6f706d] transition focus:border-[#ef4b43]/70 focus:bg-white/[0.065]"
           />
         </form>
 
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          {/* 语言国际化切换器 */}
+          <LanguageSwitcher />
+
           {/* 模板切换器 */}
           <TemplateSwitcher />
 

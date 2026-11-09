@@ -1,5 +1,6 @@
 import { MovieItem, FilterOptions, MovieCategory } from "../types";
 import { doubanMovies } from "./doubanData";
+import { globalImdbMovies } from "./globalMovieData";
 import { trendingMovies } from "./trendingService";
 import { mockMovies } from "./mockData";
 import { resourceSiteService } from "@/modules/collector/services/resourceSiteService";
@@ -7,7 +8,7 @@ import { doubanService, isCleanMovieItem } from "./doubanService";
 
 export class MovieService {
   // 本地兜底备用片库 (仅当资源站断网时使用)
-  private fallbackMovies: MovieItem[] = [...doubanMovies, ...trendingMovies, ...mockMovies];
+  private fallbackMovies: MovieItem[] = [...doubanMovies, ...globalImdbMovies, ...trendingMovies, ...mockMovies];
 
   /**
    * 获取精选轮播/焦点大片 (100% 引用豆瓣高分口碑与院线年度大作，绝无杂乱会议/晚会)
@@ -21,6 +22,24 @@ export class MovieService {
    */
   async getDoubanTopMovies(limit = 10): Promise<MovieItem[]> {
     return doubanService.getDoubanTopMovies(limit);
+  }
+
+  /**
+   * 获取国际/外文区专属权威推荐源 (基于 IMDb Top 250 / TMDB 传奇神作)
+   */
+  async getGlobalTopMovies(limit = 10): Promise<MovieItem[]> {
+    return globalImdbMovies.slice(0, limit);
+  }
+
+  /**
+   * 根据当前用户语言区域智能分流口碑榜：
+   * 中文区优先使用豆瓣口碑榜，外文国际区 (en-US / ja-JP) 自动切换为全球 IMDb / TMDB 顶级神作榜
+   */
+  async getRankingMoviesByLocale(locale: string = "zh-CN", limit = 10): Promise<MovieItem[]> {
+    if (locale === "zh-CN") {
+      return this.getDoubanTopMovies(limit);
+    }
+    return this.getGlobalTopMovies(limit);
   }
 
   /**

@@ -11,6 +11,8 @@ import { Sparkles } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { NavigationProgressBar } from "./NavigationProgressBar";
 import { TemplateProvider, useTemplate, SiteTemplate } from "@/context/TemplateContext";
+import { LocaleProvider, useLocale } from "@/i18n/LocaleContext";
+import { SupportedLocale } from "@/i18n/config";
 
 const AppShellInner: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
@@ -142,11 +144,14 @@ const AppShellInner: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
 export const AppShell: React.FC<{
   initialTemplate?: SiteTemplate;
+  initialLocale?: SupportedLocale;
   children: React.ReactNode;
-}> = ({ initialTemplate, children }) => {
+}> = ({ initialTemplate, initialLocale, children }) => {
   return (
-    <TemplateProvider initialTemplate={initialTemplate}>
-      <AppShellInner>{children}</AppShellInner>
-    </TemplateProvider>
+    <LocaleProvider initialLocale={initialLocale}>
+      <TemplateProvider initialTemplate={initialTemplate}>
+        <AppShellInner>{children}</AppShellInner>
+      </TemplateProvider>
+    </LocaleProvider>
   );
 };
