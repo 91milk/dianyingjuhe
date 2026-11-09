@@ -87,6 +87,49 @@ export interface Translations {
     likeCount: string;
     bookmark: string;
     share: string;
+    currentLine: string;
+    totalSources: string;
+    racingNotice: string;
+    episodesTitle: string;
+    episodesTotal: string;
+    prevEpisode: string;
+    nextEpisode: string;
+    switchSource: string;
+    sourceCount: string;
+    sourceClickTip: string;
+    sourceHelpTip: string;
+    rating: string;
+    director: string;
+    cast: string;
+    synopsis: string;
+    aiPlotSummary: string;
+    aiGenerating: string;
+    moreLikeThis: string;
+    shortDramaCinema: string;
+    shortDramaSubtitle: string;
+    commentTab: string;
+    danmakuColorAndPos: string;
+    danmakuScroll: string;
+    danmakuTop: string;
+    danmakuBottom: string;
+    danmakuDisplaySettings: string;
+    danmakuOpacity: string;
+    danmakuFontSize: string;
+    danmakuArea: string;
+    danmakuSpeed: string;
+    danmakuSizeSm: string;
+    danmakuSizeMd: string;
+    danmakuSizeLg: string;
+    danmakuAreaQuarter: string;
+    danmakuAreaHalf: string;
+    danmakuAreaFull: string;
+    danmakuSpeedSlow: string;
+    danmakuSpeedNormal: string;
+    danmakuSpeedFast: string;
+    webParsingPlay: string;
+    switchNativePlay: string;
+    webFallbackPlay: string;
+    playErrorHint: string;
   };
   footer: {
     slogan: string;
@@ -187,6 +230,49 @@ export const zhCN: Translations = {
     likeCount: "点赞",
     bookmark: "追剧收藏",
     share: "分享",
+    currentLine: "当前线路",
+    totalSources: "全网共聚合 {count} 条播放源",
+    racingNotice: "并发竞速 · 线路切换请点击播放器右上角",
+    episodesTitle: "剧集选集",
+    episodesTotal: "共 {count} 集",
+    prevEpisode: "上一集",
+    nextEpisode: "下一集",
+    switchSource: "切换播放线路",
+    sourceCount: "共 {count} 条",
+    sourceClickTip: "点击目标线路立即开播并自动收起",
+    sourceHelpTip: "若卡顿或解析失败请切换其他线路",
+    rating: "综合评分",
+    director: "导演",
+    cast: "主演阵容",
+    synopsis: "剧情简介",
+    aiPlotSummary: "AI 剧情速览与看点",
+    aiGenerating: "AI 正在为本片生成深度情节剖析...",
+    moreLikeThis: "喜欢这部作品的影迷还在看",
+    shortDramaCinema: "微短剧沉浸影院",
+    shortDramaSubtitle: "专享左右分屏极简布局 · 左侧竖屏高清视窗 · 右侧剧情档案与互动弹幕",
+    commentTab: "剧评 / 弹幕",
+    danmakuColorAndPos: "弹幕色彩与位置",
+    danmakuScroll: "滚动",
+    danmakuTop: "顶端",
+    danmakuBottom: "底端",
+    danmakuDisplaySettings: "弹幕显示设置",
+    danmakuOpacity: "不透明度",
+    danmakuFontSize: "字体大小",
+    danmakuArea: "显示防挡屏",
+    danmakuSpeed: "弹幕速度",
+    danmakuSizeSm: "小",
+    danmakuSizeMd: "中",
+    danmakuSizeLg: "大",
+    danmakuAreaQuarter: "1/4屏",
+    danmakuAreaHalf: "半屏",
+    danmakuAreaFull: "全屏",
+    danmakuSpeedSlow: "平缓",
+    danmakuSpeedNormal: "适中",
+    danmakuSpeedFast: "快速",
+    webParsingPlay: "网页解析播放中",
+    switchNativePlay: "切换原生播放",
+    webFallbackPlay: "网页兼容播放",
+    playErrorHint: "播放异常，正在为您尝试备用线路...",
   },
   footer: {
     slogan: "基于 AI 驱动的影视聚合与发现平台",
@@ -287,6 +373,49 @@ export const enUS: Translations = {
     likeCount: "Like",
     bookmark: "Bookmark",
     share: "Share",
+    currentLine: "Current Line",
+    totalSources: "{count} sources aggregated",
+    racingNotice: "Fast Racing · Click top-right to switch lines",
+    episodesTitle: "Episodes",
+    episodesTotal: "{count} Episodes",
+    prevEpisode: "Prev Episode",
+    nextEpisode: "Next Episode",
+    switchSource: "Switch Provider",
+    sourceCount: "{count} Lines",
+    sourceClickTip: "Select provider to play and auto-close",
+    sourceHelpTip: "Switch source if video lags or fails to buffer",
+    rating: "Rating",
+    director: "Director",
+    cast: "Cast",
+    synopsis: "Synopsis",
+    aiPlotSummary: "AI Plot & Highlights",
+    aiGenerating: "AI is generating plot insights for this title...",
+    moreLikeThis: "More Like This",
+    shortDramaCinema: "Short Play Cinema",
+    shortDramaSubtitle: "9:16 Vertical Immersive Stream · Interactive Live Chat & Episode Deck",
+    commentTab: "Chat / Reviews",
+    danmakuColorAndPos: "Barrage Style & Position",
+    danmakuScroll: "Scroll",
+    danmakuTop: "Top",
+    danmakuBottom: "Bottom",
+    danmakuDisplaySettings: "Danmaku Settings",
+    danmakuOpacity: "Opacity",
+    danmakuFontSize: "Font Size",
+    danmakuArea: "Display Area",
+    danmakuSpeed: "Scroll Speed",
+    danmakuSizeSm: "Small",
+    danmakuSizeMd: "Medium",
+    danmakuSizeLg: "Large",
+    danmakuAreaQuarter: "Top 1/4",
+    danmakuAreaHalf: "Half",
+    danmakuAreaFull: "Full",
+    danmakuSpeedSlow: "Slow",
+    danmakuSpeedNormal: "Normal",
+    danmakuSpeedFast: "Fast",
+    webParsingPlay: "Web Embedded Stream",
+    switchNativePlay: "Switch to Native Player",
+    webFallbackPlay: "Switch to Web Player",
+    playErrorHint: "Playback issue detected, trying backup stream...",
   },
   footer: {
     slogan: "Next-generation AI-powered streaming and cinema discovery platform",
@@ -387,6 +516,49 @@ export const jaJP: Translations = {
     likeCount: "高評価",
     bookmark: "お気に入り",
     share: "共有",
+    currentLine: "現在の回線",
+    totalSources: "合計 {count} 系統の配信ソースを統合",
+    racingNotice: "並行テスト中 · 回线変更はプレイヤー右上へ",
+    episodesTitle: "エピソード一覧",
+    episodesTotal: "全 {count} 話",
+    prevEpisode: "前の話",
+    nextEpisode: "次の話",
+    switchSource: "再生回線の切り替え",
+    sourceCount: "全 {count} 系統",
+    sourceClickTip: "選択すると即座に再生を開始します",
+    sourceHelpTip: "読み込みが遅い場合は別の回線をお試しください",
+    rating: "評価",
+    director: "監督",
+    cast: "キャスト",
+    synopsis: "あらすじ",
+    aiPlotSummary: "AI ストーリー解説＆見どころ",
+    aiGenerating: "AIがあらすじと見どころを分析中です...",
+    moreLikeThis: "この作品を見た人におすすめ",
+    shortDramaCinema: "縦型ショートドラマシアター",
+    shortDramaSubtitle: "9:16縦画面スマホ最適化 · 左右分割＆リアルタイム弾幕コメント",
+    commentTab: "コメント / 弾幕",
+    danmakuColorAndPos: "弾幕カラー＆表示位置",
+    danmakuScroll: "スクロール",
+    danmakuTop: "上部固定",
+    danmakuBottom: "下部固定",
+    danmakuDisplaySettings: "弾幕表示設定",
+    danmakuOpacity: "不透明度",
+    danmakuFontSize: "フォントサイズ",
+    danmakuArea: "表示領域",
+    danmakuSpeed: "流れる速度",
+    danmakuSizeSm: "小",
+    danmakuSizeMd: "中",
+    danmakuSizeLg: "大",
+    danmakuAreaQuarter: "上部1/4",
+    danmakuAreaHalf: "半分",
+    danmakuAreaFull: "全画面",
+    danmakuSpeedSlow: "ゆっくり",
+    danmakuSpeedNormal: "標準",
+    danmakuSpeedFast: "高速",
+    webParsingPlay: "Web埋め込み再生中",
+    switchNativePlay: "ネイティブ再生へ切り替え",
+    webFallbackPlay: "Web互換再生へ切り替え",
+    playErrorHint: "再生に問題が発生しました。代替回線を試行中...",
   },
   footer: {
     slogan: "AI駆動の次世代動画アグリゲーション＆映画発見プラットフォーム",

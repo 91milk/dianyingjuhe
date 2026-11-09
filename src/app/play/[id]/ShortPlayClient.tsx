@@ -23,6 +23,8 @@ import {
   Send,
 } from "lucide-react";
 import { deduplicateSources } from "@/modules/movie/utils/sourceDeduplicator";
+import { useLocale } from "@/i18n/LocaleContext";
+import { getLocalizedMovie } from "@/modules/movie/utils/localizeMovie";
 
 interface ShortPlayClientProps {
   movie: MovieItem;
@@ -32,11 +34,14 @@ interface ShortPlayClientProps {
 }
 
 export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
-  movie,
+  movie: rawMovie,
   similarMovies,
   initialSourceId,
   initialEpisodeId,
 }) => {
+  const { t, locale } = useLocale();
+  const movie = getLocalizedMovie(rawMovie, locale);
+
   const [sources, setSources] = useState<PlaySource[]>(() => deduplicateSources(movie.sources || []));
   const [activeSource, setActiveSource] = useState<PlaySource | null>(() => {
     const initSources = deduplicateSources(movie.sources || []);
@@ -52,7 +57,7 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   const [isResolving, setIsResolving] = useState<boolean>(true);
-  const [resolveMessage, setResolveMessage] = useState<string>("正在并发探测全网短剧资源站...");
+  const [resolveMessage, setResolveMessage] = useState<string>(() => t.player.resolvingNotice);
   const [resolveProgress, setResolveProgress] = useState<number>(20);
   const [initialTime, setInitialTime] = useState<number>(() => {
     const progress = historyService.getMovieProgress(movie.id);
@@ -95,7 +100,7 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
         if (isMounted) {
           abortCtrl.abort();
           setResolveProgress(100);
-          setResolveMessage(`已载入当前首选播放源 (共 ${movie.sources?.length || 1} 条)`);
+          setResolveMessage(t.player.totalSources.replace("{count}", String(movie.sources?.length || 1)));
           setIsResolving(false);
         }
       }, 5000);
@@ -138,16 +143,16 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
             return currentActive.episodes[0];
           });
 
-          setResolveMessage(`已成功聚合 ${rawSources.length} 条全网高速短剧线路`);
+          setResolveMessage(t.player.totalSources.replace("{count}", String(rawSources.length)));
         } else if (isMounted) {
           setResolveProgress(100);
-          setResolveMessage(`已载入当前首选播放源 (共 ${movie.sources?.length || 1} 条)`);
+          setResolveMessage(t.player.totalSources.replace("{count}", String(movie.sources?.length || 1)));
         }
       } catch (err: unknown) {
         const isAbort = err instanceof Error && err.name === "AbortError";
         if (isMounted) {
           setResolveProgress(100);
-          setResolveMessage(`已载入当前首选播放源 (共 ${movie.sources?.length || 1} 条)`);
+          setResolveMessage(t.player.totalSources.replace("{count}", String(movie.sources?.length || 1)));
         }
         if (!isAbort) {
           console.error("Failed to resolve live shortplay sources:", err);
@@ -210,12 +215,21 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
 
   // 格式化时间
   const formatTimeAgo = (timestamp?: number) => {
-    if (!timestamp) return "刚刚";
+    const isEn = locale === "en-US";
+    const isJa = locale === "ja-JP";
+    if (!timestamp) return isEn ? "Just now" : isJa ? "たった今" : "刚刚";
     const diff = Math.floor((Date.now() - timestamp) / 1000);
-    if (diff < 60) return "刚刚";
-    if (diff < 3600) return `${Math.floor(diff / 60)}分钟前`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}小时前`;
-    return `${Math.floor(diff / 86400)}天前`;
+    if (diff < 60) return isEn ? "Just now" : isJa ? "たった今" : "刚刚";
+    if (diff < 3600) {
+      const m = Math.floor(diff / 60);
+      return isEn ? `${m}m ago` : isJa ? `${m}分前` : `${m}分钟前`;
+    }
+    if (diff < 86400) {
+      const h = Math.floor(diff / 3600);
+      return isEn ? `${h}h ago` : isJa ? `${h}時間前` : `${h}小时前`;
+    }
+    const d = Math.floor(diff / 86400);
+    return isEn ? `${d}d ago` : isJa ? `${d}日前` : `${d}天前`;
   };
 
   // 从右侧剧评栏发送弹幕/评论
@@ -323,11 +337,11 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
             <h1 className="text-base font-extrabold text-white flex items-center gap-2">
               {movie.title}
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 uppercase font-black tracking-wider">
-                微短剧沉浸影院
+                {t.player.shortDramaCinema}
               </span>
             </h1>
             <p className="text-xs text-zinc-400 mt-0.5">
-              专享左右分屏极简布局 · 左侧竖屏高清视窗 · 右侧剧情档案与互动弹幕
+              {t.player.shortDramaSubtitle}
             </p>
           </div>
         </div>
@@ -341,20 +355,20 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
                 ? "bg-rose-500/20 border-rose-500/40 text-rose-300 hover:bg-rose-500/30"
                 : "bg-amber-500/20 border-amber-500/40 text-amber-300 hover:bg-amber-500/30"
             }`}
-            title="已开启智能自动识别画幅，亦可随时手动点击在竖屏(9:16)与横屏(16:9)之间切换"
+            title="Toggle aspect mode"
           >
             {aspectMode === "9/16" ? (
               <>
                 <Smartphone className="w-3.5 h-3.5 text-rose-400" />
-                <span>画幅: 竖屏 9:16</span>
+                <span>{t.player.aspectToggleVertical}</span>
               </>
             ) : (
               <>
                 <Tv className="w-3.5 h-3.5 text-amber-400" />
-                <span>画幅: 横屏 16:9</span>
+                <span>{t.player.aspectToggleHorizontal}</span>
               </>
             )}
-            <span className="text-[10px] opacity-70 font-normal ml-0.5">点击切换</span>
+            <span className="text-[10px] opacity-70 font-normal ml-0.5">{locale === "zh-CN" ? "点击切换" : (locale === "ja-JP" ? "切替" : "Toggle")}</span>
           </button>
 
           {isResolving ? (
@@ -365,7 +379,7 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
           ) : (
             <span className="flex items-center gap-1 text-emerald-400 font-medium">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              已汇聚 {sources.length} 条短剧源
+              {t.player.totalSources.replace("{count}", String(sources.length))}
             </span>
           )}
         </div>
@@ -499,7 +513,7 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
                       ? "bg-rose-500/20 border-rose-500 text-rose-400"
                       : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white"
                   }`}
-                  title="为本剧点赞"
+                  title={t.player.likeCount}
                 >
                   <ThumbsUp className="w-4 h-4" />
                 </button>
@@ -510,7 +524,7 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
                       ? "bg-amber-500/20 border-amber-500 text-amber-300"
                       : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white"
                   }`}
-                  title="追剧收藏"
+                  title={t.player.bookmark}
                 >
                   <Bookmark className="w-4 h-4" />
                 </button>
@@ -522,7 +536,7 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
               <div className="p-3 rounded-xl bg-gradient-to-r from-amber-500/10 via-black/40 to-rose-500/10 border border-amber-500/30 text-xs space-y-1.5">
                 <div className="flex items-center gap-1.5 font-bold text-amber-300">
                   <Sparkles className="w-3.5 h-3.5 text-[#ffcf32]" />
-                  <span>流量君 AI 核心亮点速评：</span>
+                  <span>{t.player.aiPlotSummary}：</span>
                 </div>
                 <p className="text-zinc-300 leading-relaxed text-[11px]">{movie.aiHighlights[0]}</p>
               </div>
@@ -530,7 +544,7 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
 
             {/* 简介 */}
             <div className="text-xs text-zinc-400 leading-relaxed border-t border-zinc-800 pt-2.5">
-              <span className="font-semibold text-zinc-300 block mb-1">本剧看点：</span>
+              <span className="font-semibold text-zinc-300 block mb-1">{t.player.synopsis}：</span>
               <p className="text-zinc-300 text-[11px] line-clamp-3">{movie.summary}</p>
             </div>
           </div>
@@ -563,19 +577,20 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
             <div className="flex items-center justify-between border-b border-zinc-800 pb-2.5">
               <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
                 <MessageSquare className="w-3.5 h-3.5 text-[#ffcf32]" />
-                本集热门剧评与弹幕
+                {t.player.commentTab}
                 <span className="text-[10px] font-normal px-1.5 py-0.2 rounded-full bg-amber-400/20 text-[#ffcf32]">
                   {comments.length}
                 </span>
               </h3>
-              <span className="text-[10px] text-zinc-500">双向同步</span>
             </div>
 
             {/* 剧评列表 */}
             <div className="space-y-2.5 max-h-60 overflow-y-auto no-scrollbar scrollbar-none pr-0.5">
               {comments.length === 0 ? (
                 <div className="py-6 text-center text-xs text-zinc-500">
-                  暂无弹幕剧评，发一条抢占首发吧~
+                  {locale === "zh-CN"
+                    ? "暂无弹幕剧评，发一条抢占首发吧~"
+                    : (locale === "ja-JP" ? "まだコメントがありません。最初のコメントを投稿しましょう！" : "No live comments yet. Be the first to share!")}
                 </div>
               ) : (
                 comments.map((c) => {
@@ -609,7 +624,7 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
                         <button
                           onClick={() => handleLikeComment(c.id)}
                           className="flex items-center gap-1 hover:text-amber-400 transition cursor-pointer"
-                          title="点赞"
+                          title={t.player.likeCount}
                         >
                           <ThumbsUp className="w-2.5 h-2.5 text-zinc-400 hover:text-amber-400" />
                           <span>{c.likes || 0}</span>
@@ -627,7 +642,7 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
                 type="text"
                 value={commentInput}
                 onChange={(e) => setCommentInput(e.target.value)}
-                placeholder="说点什么发弹幕参与互动..."
+                placeholder={t.player.danmakuInputPlaceholder}
                 maxLength={60}
                 className="flex-1 bg-black/50 border border-zinc-700/80 focus:border-amber-400 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-hidden transition"
               />
@@ -635,7 +650,7 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
                 type="submit"
                 disabled={!commentInput.trim() || isSubmittingComment}
                 className="p-2 rounded-xl bg-[#ffcf32] text-black font-bold hover:bg-amber-400 disabled:opacity-30 transition cursor-pointer flex items-center justify-center shrink-0"
-                title="发送剧评"
+                title={t.player.danmakuSend}
               >
                 <Send className="w-3.5 h-3.5" />
               </button>
@@ -650,13 +665,12 @@ export const ShortPlayClient: React.FC<ShortPlayClientProps> = ({
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-black text-white flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-rose-500" />
-              正在追更本剧的观众还喜欢
+              {t.player.moreLikeThis}
             </h2>
-            <span className="text-xs text-zinc-400">同题材爆款爽剧精选</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {similarMovies.slice(0, 6).map((sim) => (
-              <MovieCard key={sim.id} movie={sim} />
+              <MovieCard key={sim.id} movie={getLocalizedMovie(sim, locale)} />
             ))}
           </div>
         </section>

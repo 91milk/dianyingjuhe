@@ -5,6 +5,7 @@ import Artplayer from "artplayer";
 import Hls from "hls.js";
 import { AlertCircle, RefreshCw, MonitorPlay } from "lucide-react";
 import { DanmakuOverlay } from "./DanmakuOverlay";
+import { useLocale } from "@/i18n/LocaleContext";
 
 interface VideoPlayerProps {
   url: string;
@@ -39,6 +40,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   className = "",
   children,
 }) => {
+  const { t } = useLocale();
   const artRef = useRef<HTMLDivElement>(null);
   const playerInstance = useRef<Artplayer | null>(null);
   const [currentSec, setCurrentSec] = useState<number>(initialTime);
@@ -226,8 +228,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
       art.on("error", () => {
         if (!isDestroyed) {
-          setPlayError("播放异常，正在为您尝试备用线路...");
-          onPlaybackError?.("播放器加载失败");
+          setPlayError(t.player.playErrorHint);
+          onPlaybackError?.("Playback error");
         }
       });
 
@@ -297,14 +299,14 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
         <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
           <span className="text-[10px] px-2 py-0.5 rounded-md bg-black/70 text-zinc-400 border border-zinc-700/80 backdrop-blur">
-            网页解析播放中
+            {t.player.webParsingPlay}
           </span>
           <button
             onClick={() => setUseIframe(false)}
             className="px-2.5 py-1 text-[11px] rounded-lg bg-zinc-900/90 hover:bg-black text-[#ffcf32] border border-amber-500/30 backdrop-blur cursor-pointer transition flex items-center gap-1 shadow-lg font-medium"
           >
             <MonitorPlay className="w-3 h-3" />
-            切换原生播放
+            {t.player.switchNativePlay}
           </button>
         </div>
       </div>
@@ -340,7 +342,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             className="px-3 py-1 rounded-lg bg-[#ffcf32] text-black font-semibold hover:bg-amber-400 cursor-pointer transition flex items-center gap-1 shrink-0"
           >
             <RefreshCw className="w-3 h-3" />
-            网页兼容播放
+            {t.player.webFallbackPlay}
           </button>
         </div>
       )}

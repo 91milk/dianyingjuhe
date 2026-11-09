@@ -10,6 +10,8 @@ import { historyService } from "@/modules/user/services/historyService";
 import { MovieCard } from "@/modules/movie/components/MovieCard";
 import { Sparkles, Star, Film, Zap, RefreshCw, CheckCircle2 } from "lucide-react";
 import { deduplicateSources } from "@/modules/movie/utils/sourceDeduplicator";
+import { useLocale } from "@/i18n/LocaleContext";
+import { getLocalizedMovie } from "@/modules/movie/utils/localizeMovie";
 
 interface WatchClientProps {
   movie: MovieItem;
@@ -19,11 +21,14 @@ interface WatchClientProps {
 }
 
 export const WatchClient: React.FC<WatchClientProps> = ({
-  movie,
+  movie: rawMovie,
   similarMovies,
   initialSourceId,
   initialEpisodeId,
 }) => {
+  const { t, locale } = useLocale();
+  const movie = getLocalizedMovie(rawMovie, locale);
+
   // 动态聚合的播放线路列表（自动去重过滤）
   const [sources, setSources] = useState<PlaySource[]>(() => deduplicateSources(movie.sources || []));
 
@@ -39,7 +44,7 @@ export const WatchClient: React.FC<WatchClientProps> = ({
 
   // 异步获取多源状态与进度
   const [isResolving, setIsResolving] = useState<boolean>(true);
-  const [resolveMessage, setResolveMessage] = useState<string>("正在为您准备高清播放线路...");
+  const [resolveMessage, setResolveMessage] = useState<string>(t.player.resolvingNotice);
   const [resolveProgress, setResolveProgress] = useState<number>(20);
 
   // 记忆进度 (懒初始化恢复播放进度)
@@ -227,7 +232,7 @@ export const WatchClient: React.FC<WatchClientProps> = ({
               </span>
             )}
             <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-400/10 text-[#ffcf32] border border-amber-400/20 font-medium">
-              并发竞速 · 线路切换请点击播放器右上角
+              {t.player.racingNotice}
             </span>
           </div>
         </div>
@@ -278,10 +283,10 @@ export const WatchClient: React.FC<WatchClientProps> = ({
                 <div className="relative z-10 flex flex-col items-center gap-3">
                   <div className="w-10 h-10 rounded-full border-2 border-[#ffcf32] border-t-transparent animate-spin" />
                   <span className="text-sm font-semibold text-white">
-                    正在为您准备超清播放线路...
+                    {t.player.resolvingNotice}
                   </span>
                   <span className="text-xs text-zinc-400">
-                    已连接全网优质高清线路，即将开启秒级流畅播放
+                    {t.player.resolvedSuccess}
                   </span>
                 </div>
               </div>
@@ -311,7 +316,7 @@ export const WatchClient: React.FC<WatchClientProps> = ({
                       <span>·</span>
                       <span className="text-emerald-400 font-medium flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                         <Zap className="w-3 h-3" />
-                        当前线路: {activeSource.name}
+                        {t.player.currentLine}: {activeSource.name}
                       </span>
                     </>
                   )}
@@ -320,7 +325,7 @@ export const WatchClient: React.FC<WatchClientProps> = ({
 
               <div className="text-xs text-zinc-400 flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-xl border border-zinc-800 self-start sm:self-auto">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>全网共聚合 {sources.length} 条播放源</span>
+                <span>{t.player.totalSources.replace("{count}", String(sources.length))}</span>
               </div>
             </div>
           </div>
@@ -357,7 +362,7 @@ export const WatchClient: React.FC<WatchClientProps> = ({
               <div className="w-6 h-6 rounded-lg bg-[#ffcf32] flex items-center justify-center text-black">
                 <Sparkles className="w-3.5 h-3.5 fill-black" />
               </div>
-              <h3 className="font-bold text-sm text-white">流量君 AI 剧情速览与看点</h3>
+              <h3 className="font-bold text-sm text-white">{t.player.aiPlotSummary}</h3>
             </div>
 
             <div className="space-y-2 text-xs text-zinc-300">
@@ -372,7 +377,7 @@ export const WatchClient: React.FC<WatchClientProps> = ({
                   </div>
                 ))
               ) : (
-                <p className="text-zinc-400">AI 正在为本片生成深度情节剖析...</p>
+                <p className="text-zinc-400">{t.player.aiGenerating}</p>
               )}
             </div>
           </div>
@@ -380,7 +385,7 @@ export const WatchClient: React.FC<WatchClientProps> = ({
           {/* 影片基本资料卡 */}
           <div className="bg-zinc-900/60 border border-zinc-800 p-5 rounded-2xl space-y-3 text-xs">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <span className="text-zinc-400">综合评分</span>
+              <span className="text-zinc-400">{t.player.rating}</span>
               <span className="font-bold text-[#ffcf32] flex items-center gap-1 text-sm">
                 <Star className="w-4 h-4 fill-[#ffcf32]" />
                 {movie.rating.toFixed(1)} / 10
@@ -389,14 +394,14 @@ export const WatchClient: React.FC<WatchClientProps> = ({
 
             {movie.director && (
               <div className="flex items-center justify-between">
-                <span className="text-zinc-400">导演</span>
+                <span className="text-zinc-400">{t.player.director}</span>
                 <span className="text-zinc-200">{movie.director}</span>
               </div>
             )}
 
             {movie.actors && movie.actors.length > 0 && (
               <div className="flex flex-col gap-1">
-                <span className="text-zinc-400">主演阵容</span>
+                <span className="text-zinc-400">{t.player.cast}</span>
                 <span className="text-zinc-300 leading-relaxed">
                   {movie.actors.join("、")}
                 </span>
@@ -404,7 +409,7 @@ export const WatchClient: React.FC<WatchClientProps> = ({
             )}
 
             <div className="pt-2 border-t border-zinc-800">
-              <span className="text-zinc-400 block mb-1">剧情简介</span>
+              <span className="text-zinc-400 block mb-1">{t.player.synopsis}</span>
               <p className="text-zinc-300 leading-relaxed text-[11px] max-h-48 overflow-y-auto pr-1">
                 {movie.summary}
               </p>
@@ -418,11 +423,11 @@ export const WatchClient: React.FC<WatchClientProps> = ({
         <section className="pt-6 border-t border-zinc-800">
           <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
             <Film className="w-4 h-4 text-[#ffcf32]" />
-            喜欢这部作品的影迷还在看
+            {t.player.moreLikeThis}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {similarMovies.map((sim) => (
-              <MovieCard key={sim.id} movie={sim} />
+              <MovieCard key={sim.id} movie={getLocalizedMovie(sim, locale)} />
             ))}
           </div>
         </section>

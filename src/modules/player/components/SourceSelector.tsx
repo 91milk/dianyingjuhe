@@ -4,6 +4,7 @@ import React, { useMemo } from "react";
 import { PlaySource } from "@/modules/movie/types";
 import { Radio, HelpCircle } from "lucide-react";
 import { deduplicateSources } from "@/modules/movie/utils/sourceDeduplicator";
+import { useLocale } from "@/i18n/LocaleContext";
 
 interface SourceSelectorProps {
   sources: PlaySource[];
@@ -16,6 +17,7 @@ export const SourceSelector: React.FC<SourceSelectorProps> = ({
   activeSourceId,
   onSelectSource,
 }) => {
+  const { t } = useLocale();
   const cleanSources = useMemo(() => deduplicateSources(sources), [sources]);
   if (!cleanSources || cleanSources.length === 0) return null;
 
@@ -25,15 +27,15 @@ export const SourceSelector: React.FC<SourceSelectorProps> = ({
       <div className="flex items-center justify-between text-xs">
         <span className="text-zinc-300 font-semibold flex items-center gap-1.5">
           <Radio className="w-4 h-4 text-[#ffcf32]" />
-          播放线路切换
+          {t.player.switchSource}
           <span className="text-[11px] font-normal text-zinc-500">
-            (共精选 {cleanSources.length} 条优质源)
+            ({t.player.sourceCount.replace("{count}", String(cleanSources.length))})
           </span>
         </span>
 
         <span className="text-[11px] text-zinc-500 flex items-center gap-1">
           <HelpCircle className="w-3 h-3 text-zinc-400" />
-          若卡顿或解析失败请切换其他线路
+          {t.player.sourceHelpTip}
         </span>
       </div>
 

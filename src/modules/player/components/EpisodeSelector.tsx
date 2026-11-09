@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { Episode } from "@/modules/movie/types";
 import { ListVideo, ChevronLeft, ChevronRight } from "lucide-react";
+import { useLocale } from "@/i18n/LocaleContext";
 
 interface EpisodeSelectorProps {
   episodes: Episode[];
@@ -21,6 +22,7 @@ export const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   layout = "default",
   className = "",
 }) => {
+  const { t } = useLocale();
   const safeEpisodes = episodes || [];
 
   // 找到当前选中的集数索引
@@ -70,10 +72,10 @@ export const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
             <ListVideo className="w-4 h-4 text-[#ffcf32]" />
-            剧集选集
+            {t.player.episodesTitle}
           </h3>
           <span className="text-xs text-zinc-400 font-medium">
-            共 {episodes.length} {episodes.length > 1 ? "集" : "部"}
+            {t.player.episodesTotal.replace("{count}", String(episodes.length))}
           </span>
         </div>
 
@@ -84,17 +86,17 @@ export const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
               onClick={handlePrev}
               disabled={!hasPrev}
               className="px-2.5 py-1 text-xs rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 disabled:opacity-40 disabled:hover:bg-zinc-800 transition flex items-center gap-0.5 cursor-pointer"
-              title="播放上一集"
+              title={t.player.prevEpisode}
             >
-              <ChevronLeft className="w-3.5 h-3.5" /> 上一集
+              <ChevronLeft className="w-3.5 h-3.5" /> {t.player.prevEpisode}
             </button>
             <button
               onClick={handleNext}
               disabled={!hasNext}
               className="px-2.5 py-1 text-xs rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 disabled:opacity-40 disabled:hover:bg-zinc-800 transition flex items-center gap-0.5 cursor-pointer"
-              title="播放下一集"
+              title={t.player.nextEpisode}
             >
-              下一集 <ChevronRight className="w-3.5 h-3.5" />
+              {t.player.nextEpisode} <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         )}

@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { PlaySource } from "@/modules/movie/types";
 import { Zap, ChevronDown, CheckCircle2, X, Activity, Layers } from "lucide-react";
 import { deduplicateSources } from "@/modules/movie/utils/sourceDeduplicator";
+import { useLocale } from "@/i18n/LocaleContext";
 
 interface FloatingSourceSelectorProps {
   sources: PlaySource[];
@@ -16,6 +17,7 @@ export const FloatingSourceSelector: React.FC<FloatingSourceSelectorProps> = ({
   activeSource,
   onSelectSource,
 }) => {
+  const { t } = useLocale();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -51,15 +53,15 @@ export const FloatingSourceSelector: React.FC<FloatingSourceSelectorProps> = ({
         <button
           onClick={() => setIsOpen(true)}
           className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/80 hover:bg-black/95 text-white border border-amber-400/40 backdrop-blur-md shadow-2xl cursor-pointer transition-all hover:scale-105 active:scale-95 group"
-          title="点击放大切换播放线路"
+          title={t.player.floatingSwitchTitle}
         >
           <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <span className="text-xs font-bold text-amber-300 flex items-center gap-1">
             <Zap className="w-3.5 h-3.5 fill-amber-300" />
-            <span className="max-w-[110px] sm:max-w-[130px] truncate">{activeSource?.name || "切换线路"}</span>
+            <span className="max-w-[110px] sm:max-w-[130px] truncate">{activeSource?.name || t.player.switchSource}</span>
           </span>
           <span className="text-[10px] text-zinc-400 group-hover:text-amber-200">
-            {cleanSources.length}线
+            {cleanSources.length}
           </span>
           <ChevronDown className="w-3.5 h-3.5 text-zinc-400 group-hover:text-amber-300 transition-transform" />
         </button>
@@ -74,12 +76,12 @@ export const FloatingSourceSelector: React.FC<FloatingSourceSelectorProps> = ({
               </div>
               <div>
                 <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                  切换播放线路
+                  {t.player.switchSource}
                   <span className="text-[10px] font-normal px-1.5 py-0.2 rounded-full bg-amber-400/20 text-[#ffcf32]">
-                    共 {cleanSources.length} 条
+                    {t.player.sourceCount.replace("{count}", String(cleanSources.length))}
                   </span>
                 </h4>
-                <p className="text-[10px] text-zinc-400 mt-0.5">点击目标线路立即开播并自动收起</p>
+                <p className="text-[10px] text-zinc-400 mt-0.5">{t.player.sourceClickTip}</p>
               </div>
             </div>
 

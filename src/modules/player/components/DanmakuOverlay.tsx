@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { DanmakuItem, DanmakuConfig, DEFAULT_DANMAKU_CONFIG } from "../types";
+import { useLocale } from "@/i18n/LocaleContext";
 
 interface DanmakuOverlayProps {
   movieId?: string;
@@ -51,6 +52,7 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
   onSendDanmu,
   className = "",
 }) => {
+  const { t } = useLocale();
   // 1. 用户弹幕偏好配置 (持久化到本地 localStorage)
   const [config, setConfig] = useState<DanmakuConfig>(() => {
     if (typeof window !== "undefined") {
@@ -386,7 +388,7 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
                 <div className="flex items-center justify-between border-b border-zinc-800 pb-1.5 text-xs">
                   <span className="font-bold text-white flex items-center gap-1">
                     <Palette className="w-3.5 h-3.5 text-[#ffcf32]" />
-                    弹幕色彩与位置
+                    {t.player.danmakuColorAndPos}
                   </span>
                   <button
                     type="button"
@@ -426,7 +428,7 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
                         : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"
                     }`}
                   >
-                    滚动
+                    {t.player.danmakuScroll}
                   </button>
                   <button
                     type="button"
@@ -437,7 +439,7 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
                         : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"
                     }`}
                   >
-                    顶端
+                    {t.player.danmakuTop}
                   </button>
                   <button
                     type="button"
@@ -448,7 +450,7 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
                         : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"
                     }`}
                   >
-                    底端
+                    {t.player.danmakuBottom}
                   </button>
                 </div>
               </div>
@@ -459,7 +461,7 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
             type="text"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="发条弹幕参与互动..."
+            placeholder={t.player.danmakuInputPlaceholder}
             maxLength={60}
             className="w-full bg-transparent text-xs text-white placeholder-zinc-400 focus:outline-hidden"
             style={{ color: selectedColor !== "#ffffff" ? selectedColor : undefined }}
@@ -469,7 +471,7 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
             type="submit"
             disabled={!inputText.trim()}
             className="p-1 rounded-full text-[#ffcf32] hover:text-white disabled:opacity-25 transition cursor-pointer shrink-0 ml-1"
-            title="发送弹幕"
+            title={t.player.danmakuSend}
           >
             <Send className="w-3.5 h-3.5" />
           </button>
@@ -489,7 +491,7 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
                   ? "bg-[#ffcf32] text-black border-amber-400"
                   : "bg-black/60 border-zinc-700 text-zinc-300 hover:text-white"
               }`}
-              title="弹幕参数设置"
+              title={t.player.danmakuSettings}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
             </button>
@@ -500,7 +502,7 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
                 <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
                   <span className="font-bold text-white flex items-center gap-1.5">
                     <SlidersHorizontal className="w-3.5 h-3.5 text-[#ffcf32]" />
-                    弹幕显示设置
+                    {t.player.danmakuDisplaySettings}
                   </span>
                   <button
                     onClick={() => setIsSettingsOpen(false)}
@@ -513,7 +515,7 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
                 {/* 不透明度调节 */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                    <span>不透明度</span>
+                    <span>{t.player.danmakuOpacity}</span>
                     <span className="text-amber-300 font-bold">{Math.round(config.opacity * 100)}%</span>
                   </div>
                   <div className="grid grid-cols-3 gap-1">
@@ -536,16 +538,16 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
                 {/* 字号大小 */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                    <span>字体大小</span>
+                    <span>{t.player.danmakuFontSize}</span>
                     <span className="text-amber-300 font-bold">
-                      {config.fontSize === "sm" ? "小" : config.fontSize === "md" ? "标准" : "特大"}
+                      {config.fontSize === "sm" ? t.player.danmakuSizeSm : config.fontSize === "md" ? t.player.danmakuSizeMd : t.player.danmakuSizeLg}
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-1">
                     {[
-                      { key: "sm", label: "小" },
-                      { key: "md", label: "中" },
-                      { key: "lg", label: "大" },
+                      { key: "sm", label: t.player.danmakuSizeSm },
+                      { key: "md", label: t.player.danmakuSizeMd },
+                      { key: "lg", label: t.player.danmakuSizeLg },
                     ].map((f) => (
                       <button
                         key={f.key}
@@ -565,16 +567,16 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
                 {/* 显示区域 (防挡脸) */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                    <span>显示防挡屏</span>
+                    <span>{t.player.danmakuArea}</span>
                     <span className="text-amber-300 font-bold">
-                      {config.area === "quarter" ? "顶部1/4" : config.area === "half" ? "半屏" : "全屏"}
+                      {config.area === "quarter" ? t.player.danmakuAreaQuarter : config.area === "half" ? t.player.danmakuAreaHalf : t.player.danmakuAreaFull}
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-1">
                     {[
-                      { key: "quarter", label: "1/4屏" },
-                      { key: "half", label: "半屏" },
-                      { key: "full", label: "全屏" },
+                      { key: "quarter", label: t.player.danmakuAreaQuarter },
+                      { key: "half", label: t.player.danmakuAreaHalf },
+                      { key: "full", label: t.player.danmakuAreaFull },
                     ].map((a) => (
                       <button
                         key={a.key}
@@ -594,16 +596,16 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
                 {/* 飞行速度 */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                    <span>弹幕速度</span>
+                    <span>{t.player.danmakuSpeed}</span>
                     <span className="text-amber-300 font-bold">
-                      {config.speed >= 15 ? "平缓" : config.speed <= 9 ? "极速" : "适中"}
+                      {config.speed >= 15 ? t.player.danmakuSpeedSlow : config.speed <= 9 ? t.player.danmakuSpeedFast : t.player.danmakuSpeedNormal}
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-1">
                     {[
-                      { key: 16, label: "平缓" },
-                      { key: 12, label: "适中" },
-                      { key: 8, label: "快速" },
+                      { key: 16, label: t.player.danmakuSpeedSlow },
+                      { key: 12, label: t.player.danmakuSpeedNormal },
+                      { key: 8, label: t.player.danmakuSpeedFast },
                     ].map((s) => (
                       <button
                         key={s.key}
@@ -631,10 +633,10 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
                 ? "bg-[#ffcf32]/20 border-amber-400/50 text-[#ffcf32]"
                 : "bg-black/60 border-zinc-700 text-zinc-400 hover:text-white"
             }`}
-            title={config.enabled ? "点击关闭弹幕" : "点击开启弹幕"}
+            title={config.enabled ? t.player.danmakuToggleOff : t.player.danmakuToggleOn}
           >
             {config.enabled ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-            <span className="text-[10px] hidden sm:inline">{config.enabled ? "弹幕开" : "弹幕关"}</span>
+            <span className="text-[10px] hidden sm:inline">{config.enabled ? t.player.danmakuToggleOn : t.player.danmakuToggleOff}</span>
           </button>
         </div>
       </div>
