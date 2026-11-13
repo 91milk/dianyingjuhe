@@ -25,6 +25,7 @@ export interface Translations {
     shortplay: string;
     anime: string;
     variety: string;
+    playlists: string;
     aiSearch: string;
     history: string;
     visionSearch: string;
@@ -41,6 +42,10 @@ export interface Translations {
     moodTitle: string;
     moodDesc: string;
     moodShuffle: string;
+    playlistsTitle: string;
+    playlistsBadge: string;
+    playlistsDesc: string;
+    playlistsMore: string;
     aiFindTitle: string;
     aiFindDesc: string;
     aiFindPlaceholder: string;
@@ -168,6 +173,7 @@ export const zhCN: Translations = {
     shortplay: "热播短剧",
     anime: "动漫新番",
     variety: "综艺节目",
+    playlists: "精选片单",
     aiSearch: "AI 找片",
     history: "播放历史",
     visionSearch: "以图识片",
@@ -184,6 +190,10 @@ export const zhCN: Translations = {
     moodTitle: "情绪场景与灵感选片舱",
     moodDesc: "用当下的心境探索影视，触达与你产生共鸣的光影宇宙",
     moodShuffle: "换一批",
+    playlistsTitle: "懂片精选 · 专题片单",
+    playlistsBadge: "更懂你的片单",
+    playlistsDesc: "资深影迷深度主题策展 · 午夜放映室与高分合辑一键开播",
+    playlistsMore: "片单广场",
     aiFindTitle: "不知道看什么？用一句话描述你的观影心情",
     aiFindDesc: "支持模糊情绪、剧情反转、特定题材与全网超清片库秒级联查",
     aiFindPlaceholder: "例如：想看反转不断、紧张到不敢呼吸的悬疑高分神作...",
@@ -311,6 +321,7 @@ export const enUS: Translations = {
     shortplay: "Short Drama",
     anime: "Animation",
     variety: "Shows",
+    playlists: "Playlists",
     aiSearch: "AI Search",
     history: "History",
     visionSearch: "Visual Search",
@@ -327,6 +338,10 @@ export const enUS: Translations = {
     moodTitle: "Mood Cinema Journey",
     moodDesc: "Explore cinema curated by your current vibe and emotional resonance",
     moodShuffle: "Shuffle",
+    playlistsTitle: "Curated Playlists",
+    playlistsBadge: "Deep Cinema",
+    playlistsDesc: "Handcrafted thematic retrospectives · Midnight cinema and masterpieces",
+    playlistsMore: "Playlists Square",
     aiFindTitle: "Not sure what to watch? Tell us your mood in one sentence",
     aiFindDesc: "Supports natural language mood matching, plot twists, genres and global streaming catalog",
     aiFindPlaceholder: "e.g., Mind-bending sci-fi with intense plot twists...",
@@ -454,6 +469,7 @@ export const jaJP: Translations = {
     shortplay: "ショートドラマ",
     anime: "アニメ",
     variety: "バラエティ",
+    playlists: "プレイリスト",
     aiSearch: "AI検索",
     history: "再生履歴",
     visionSearch: "画像で検索",
@@ -470,6 +486,10 @@ export const jaJP: Translations = {
     moodTitle: "気分で探す映画旅",
     moodDesc: "いまの気分や感情に合わせて、ぴったりの名作と出会う",
     moodShuffle: "シャッフル",
+    playlistsTitle: "厳選プレイリスト",
+    playlistsBadge: "テーマ特選",
+    playlistsDesc: "深夜シネマ、超難解サスペンス、話題の縦型ドラマを網羅",
+    playlistsMore: "プレイリスト広場",
     aiFindTitle: "何を見るか迷ったら？いまの気分を一言で",
     aiFindDesc: "感情、どんでん返し、ジャンルから全ネット動画を一瞬で横断検索",
     aiFindPlaceholder: "例：息をのむ大どんでん返しのあるSFサスペンス...",

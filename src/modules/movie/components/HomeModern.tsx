@@ -8,6 +8,8 @@ import { DoubanTopRailModern } from "./DoubanTopRailModern";
 import { MoodRecommendationModern } from "./MoodRecommendationModern";
 import { MovieCardModern } from "./MovieCardModern";
 import { SectionHeading } from "./SectionHeading";
+import { AiFindBar } from "./AiFindBar";
+import { PlaylistsRail } from "./PlaylistsRail";
 import { useLocale } from "@/i18n/LocaleContext";
 
 interface FilmGridProps {
@@ -53,12 +55,16 @@ export const HomeModern: React.FC<HomePageData> = ({
   hotTvs,
   shortPlays,
   animes,
+  playlists,
 }) => {
   const { t } = useLocale();
   return (
     <div className="space-y-16 sm:space-y-24">
       <HeroPanoramaModern featuredMovies={featured} />
       <MoodRecommendationModern moodCollections={moodCollections} />
+
+      {/* 懂片 AI 找片输入枢纽 */}
+      <AiFindBar />
 
       <FilmGrid
         movies={liveUpdates}
@@ -71,6 +77,11 @@ export const HomeModern: React.FC<HomePageData> = ({
       />
 
       <DoubanTopRailModern movies={topMovies} globalMovies={globalTopMovies} />
+
+      {/* 懂片精选 · 专题片单 */}
+      {playlists && playlists.length > 0 && (
+        <PlaylistsRail playlists={playlists} />
+      )}
 
       <FilmGrid
         movies={hotTvs}

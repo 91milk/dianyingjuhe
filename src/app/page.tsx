@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { movieService } from "@/modules/movie/services/movieService";
 import { moodRecommendationService } from "@/modules/movie/services/moodRecommendationService";
+import { playlistService } from "@/modules/movie/services/playlistService";
 import { HomeContainer } from "@/modules/movie/components/HomeContainer";
 import { LOCALE_COOKIE_NAME, SupportedLocale, DEFAULT_LOCALE } from "@/i18n/config";
 
@@ -23,6 +24,7 @@ async function HomeContent() {
     hotTvs,
     shortPlays,
     animes,
+    playlists,
   ] = await Promise.all([
     movieService.getFeaturedMovies(locale),
     moodRecommendationService.getInitialMoodCollections(locale),
@@ -33,6 +35,7 @@ async function HomeContent() {
     movieService.getHotTvs(8),
     movieService.getHotShortPlays(8),
     movieService.getHotAnimes(8),
+    playlistService.getAllPlaylists(),
   ]);
 
   return (
@@ -46,6 +49,7 @@ async function HomeContent() {
       hotTvs={hotTvs}
       shortPlays={shortPlays}
       animes={animes}
+      playlists={playlists}
     />
   );
 }

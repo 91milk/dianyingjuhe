@@ -57,6 +57,7 @@ export const NavbarClassic: React.FC<NavbarProps> = ({
         <nav className="hidden md:flex items-center gap-1 text-xs font-semibold text-zinc-300">
           {[
             { title: t.nav.home, href: "/" },
+            { title: t.nav.playlists, href: "/playlists", badge: "NEW" },
             { title: t.nav.movie, href: "/category?type=movie" },
             { title: t.nav.tv, href: "/category?type=tv" },
             { title: t.nav.shortplay, href: "/category?type=shortplay" },
@@ -64,6 +65,7 @@ export const NavbarClassic: React.FC<NavbarProps> = ({
             { title: t.nav.variety, href: "/category?type=variety" },
           ].map((item) => {
             const isShortPlay = item.href.includes("shortplay");
+            const isPlaylists = item.href === "/playlists";
             return (
               <Link
                 key={item.href}
@@ -71,6 +73,8 @@ export const NavbarClassic: React.FC<NavbarProps> = ({
                 className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                   isShortPlay
                     ? "bg-gradient-to-r from-rose-500/20 to-amber-500/20 text-amber-300 font-bold border border-rose-500/40 hover:border-amber-400/60 shadow-xs"
+                    : isPlaylists
+                    ? "text-purple-300 hover:text-white hover:bg-purple-950/40"
                     : "hover:text-[#ffcf32] hover:bg-zinc-800/60"
                 }`}
               >
@@ -81,6 +85,11 @@ export const NavbarClassic: React.FC<NavbarProps> = ({
                 {isShortPlay && (
                   <span className="text-[9px] px-1 py-0.2 rounded bg-rose-500 text-white font-extrabold uppercase leading-none">
                     HOT
+                  </span>
+                )}
+                {isPlaylists && (
+                  <span className="text-[9px] px-1 py-0.2 rounded bg-purple-500/30 text-purple-300 font-bold border border-purple-500/40">
+                    片单
                   </span>
                 )}
               </Link>
@@ -178,6 +187,7 @@ export const NavbarClassic: React.FC<NavbarProps> = ({
       <div className="flex md:hidden items-center gap-2 px-3 py-1.5 overflow-x-auto no-scrollbar border-t border-zinc-800/60 bg-black/40">
         {[
           { title: t.nav.home, href: "/" },
+          { title: t.nav.playlists, href: "/playlists" },
           { title: t.nav.movie, href: "/category?type=movie" },
           { title: t.nav.tv, href: "/category?type=tv" },
           { title: t.nav.shortplay, href: "/category?type=shortplay" },

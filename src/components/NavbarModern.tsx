@@ -47,6 +47,7 @@ export const NavbarModern: React.FC<NavbarProps> = ({
         <nav className="hidden items-center gap-6 text-sm font-semibold text-[#8f908d] lg:flex" aria-label="全站主导航">
           {[
             { title: t.nav.home, href: "/" },
+            { title: t.nav.playlists, href: "/playlists" },
             { title: t.nav.movie, href: "/category?type=movie" },
             { title: t.nav.tv, href: "/category?type=tv" },
             { title: t.nav.shortplay, href: "/category?type=shortplay" },
@@ -149,6 +150,7 @@ export const NavbarModern: React.FC<NavbarProps> = ({
       <nav className="flex gap-5 overflow-x-auto border-t border-white/[0.06] px-4 py-2 lg:hidden" aria-label="移动端导航">
         {[
           { title: t.nav.home, href: "/" },
+          { title: t.nav.playlists, href: "/playlists" },
           { title: t.nav.movie, href: "/category?type=movie" },
           { title: t.nav.tv, href: "/category?type=tv" },
           { title: t.nav.shortplay, href: "/category?type=shortplay" },

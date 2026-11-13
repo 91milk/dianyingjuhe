@@ -16,9 +16,10 @@ const PRESET_PROMPTS = [
 interface AiChatDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  initialPrompt?: string;
 }
 
-export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) => {
+export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose, initialPrompt }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome-1",
@@ -30,6 +31,7 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastInitialPromptRef = useRef<string | null>(null);
 
   const presets = PRESET_PROMPTS;
 
@@ -40,8 +42,12 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
   useEffect(() => {
     if (isOpen) {
       scrollToBottom();
+      if (initialPrompt && initialPrompt !== lastInitialPromptRef.current) {
+        lastInitialPromptRef.current = initialPrompt;
+        handleSend(initialPrompt);
+      }
     }
-  }, [messages, isOpen]);
+  }, [isOpen, initialPrompt]);
 
   const handleSend = async (textToSend?: string) => {
     const text = (textToSend || inputValue).trim();

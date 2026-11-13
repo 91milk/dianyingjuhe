@@ -19,8 +19,21 @@ const AppShellInner: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const { template, setTemplate, isModern } = useTemplate();
   const { t } = useLocale();
   const [isAiOpen, setIsAiOpen] = useState(false);
+  const [aiInitialPrompt, setAiInitialPrompt] = useState<string | undefined>();
   const [isVisionOpen, setIsVisionOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+  React.useEffect(() => {
+    const handleOpenAi = (e: Event) => {
+      const customEvent = e as CustomEvent<{ prompt?: string }>;
+      setAiInitialPrompt(customEvent.detail?.prompt);
+      setIsAiOpen(true);
+    };
+    window.addEventListener("dianyingjuhe:open-ai-chat", handleOpenAi);
+    return () => {
+      window.removeEventListener("dianyingjuhe:open-ai-chat", handleOpenAi);
+    };
+  }, []);
 
   // 独立管理后台：完全脱离前台外壳（不渲染前台导航栏、前台页脚及AI浮动球）
   if (pathname?.startsWith("/admin")) {
@@ -136,7 +149,14 @@ const AppShellInner: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       )}
 
       {/* 弹窗抽屉群 */}
-      <AiChatDrawer isOpen={isAiOpen} onClose={() => setIsAiOpen(false)} />
+      <AiChatDrawer
+        isOpen={isAiOpen}
+        onClose={() => {
+          setIsAiOpen(false);
+          setAiInitialPrompt(undefined);
+        }}
+        initialPrompt={aiInitialPrompt}
+      />
       <ImageSearchModal isOpen={isVisionOpen} onClose={() => setIsVisionOpen(false)} />
       <HistoryDrawer isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} />
     </div>

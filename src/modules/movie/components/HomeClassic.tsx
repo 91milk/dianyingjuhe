@@ -8,6 +8,8 @@ import { HeroPanoramaClassic } from "./HeroPanoramaClassic";
 import { DoubanTopRailClassic } from "./DoubanTopRailClassic";
 import { MoodRecommendationClassic } from "./MoodRecommendationClassic";
 import { AiFindBar } from "./AiFindBar";
+import { PlaylistsRail } from "./PlaylistsRail";
+import { ThematicPlaylist } from "../types/playlist";
 import { MovieCardClassic } from "./MovieCardClassic";
 import { Film, Tv, Zap, ChevronRight, Clapperboard, Clock } from "lucide-react";
 import { useLocale } from "@/i18n/LocaleContext";
@@ -22,6 +24,7 @@ export interface HomePageData {
   hotTvs: MovieItem[];
   shortPlays: MovieItem[];
   animes: MovieItem[];
+  playlists?: ThematicPlaylist[];
 }
 
 export const HomeClassic: React.FC<HomePageData> = ({
@@ -34,6 +37,7 @@ export const HomeClassic: React.FC<HomePageData> = ({
   hotTvs,
   shortPlays,
   animes,
+  playlists,
 }) => {
   const { t } = useLocale();
   return (
@@ -85,6 +89,11 @@ export const HomeClassic: React.FC<HomePageData> = ({
 
       {/* AI 自然语言灵感搜片条 */}
       <AiFindBar />
+
+      {/* 懂片精选 · 专题片单 */}
+      {playlists && playlists.length > 0 && (
+        <PlaylistsRail playlists={playlists} />
+      )}
 
       {/* 5. 热门连载电视剧 (直连资源站剧集专区) */}
       <section className="space-y-3 sm:space-y-4">
