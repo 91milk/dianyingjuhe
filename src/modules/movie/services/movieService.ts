@@ -5,6 +5,7 @@ import { trendingMovies } from "./trendingService";
 import { mockMovies } from "./mockData";
 import { resourceSiteService } from "@/modules/collector/services/resourceSiteService";
 import { doubanService, isCleanMovieItem } from "./doubanService";
+import { dongpianService } from "./dongpianService";
 import { getMultilingualSearchKeywords } from "../utils/localizeMovie";
 
 export class MovieService {
@@ -249,10 +250,24 @@ export class MovieService {
 
     for (const kw of searchKeywords) {
       try {
-        const cmsResults = await resourceSiteService.searchAcrossSites(kw);
-        if (cmsResults.length > 0) {
-          const cleanResults = cmsResults.filter(isCleanMovieItem);
-          if (cleanResults.length > 0) return cleanResults;
+        const [cmsResults, dpResults] = await Promise.all([
+          resourceSiteService.searchAcrossSites(kw),
+          dongpianService.searchMovies(kw).catch(() => []),
+        ]);
+        const combined = [...cmsResults, ...dpResults];
+        if (combined.length > 0) {
+          const cleanResults = combined.filter(isCleanMovieItem);
+          if (cleanResults.length > 0) {
+            // 按标题去重，优先保留带有真实可播线路的
+            const titleMap = new Map<string, MovieItem>();
+            cleanResults.forEach((m) => {
+              const key = m.title.trim().toLowerCase();
+              if (!titleMap.has(key) || (m.sources && m.sources.length > 0)) {
+                titleMap.set(key, m);
+              }
+            });
+            return Array.from(titleMap.values());
+          }
         }
       } catch {
         // ignore
